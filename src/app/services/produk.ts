@@ -18,7 +18,7 @@ export interface ProdukRecord {
   nama: string;
   deskripsi: string;
   harga: number;
-  gambar?: string;
+  gambar?: string[];
   status: StatusProduk;
   created_at: string;
   updated_at: string;
@@ -48,12 +48,26 @@ function authHeaders(token: string) {
   };
 }
 
+async function getErrorMessage(res: Response) {
+  try {
+    const data = await res.json();
+    return data?.message || data?.error || `HTTP ${res.status}`;
+  } catch {
+    try {
+      const text = await res.text();
+      return text || `HTTP ${res.status}`;
+    } catch {
+      return `HTTP ${res.status}`;
+    }
+  }
+}
+
 // Produk functions
 export async function listProduk(token: string): Promise<ProdukRecord[]> {
   const res = await fetch(`${API_URL}/produk`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`List produk gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -61,7 +75,7 @@ export async function getProdukById(token: string, id: string): Promise<ProdukRe
   const res = await fetch(`${API_URL}/produk/${id}`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Get produk gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -69,7 +83,7 @@ export async function getProdukBySubkategori(token: string, subkategoriId: strin
   const res = await fetch(`${API_URL}/produk/subkategori/${subkategoriId}`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Get produk by subkategori gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -77,7 +91,7 @@ export async function getProdukByBrand(token: string, brandId: string): Promise<
   const res = await fetch(`${API_URL}/produk/brand/${brandId}`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Get produk by brand gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -90,7 +104,7 @@ export async function createProduk(
     nama: string;
     deskripsi: string;
     harga: number;
-    gambar?: string;
+    gambar?: string[];
     status?: StatusProduk;
   }
 ): Promise<ProdukRecord> {
@@ -99,7 +113,41 @@ export async function createProduk(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Create produk gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
+  return res.json();
+}
+
+// Create produk with optional file upload (multipart)
+export async function createProdukWithFile(
+  token: string,
+  data: {
+    subkategori_id: string;
+    brand_id: string;
+    nama: string;
+    deskripsi: string;
+    harga: number;
+    status?: StatusProduk;
+  },
+  files?: File[]
+): Promise<ProdukRecord> {
+  if (!files || files.length === 0) {
+    return createProduk(token, data as any);
+  }
+  const form = new FormData();
+  Object.entries(data).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) form.append(k, String(v));
+  });
+  files.forEach((file, index) => {
+    form.append('gambar', file);
+  });
+  const res = await fetch(`${API_URL}/produk`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    } as any,
+    body: form,
+  });
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -113,7 +161,7 @@ export async function updateProduk(
     nama: string;
     deskripsi: string;
     harga: number;
-    gambar: string;
+    gambar: string[];
     status: StatusProduk;
   }>
 ): Promise<ProdukRecord> {
@@ -122,7 +170,47 @@ export async function updateProduk(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Update produk gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
+  return res.json();
+}
+
+// Update produk with optional file upload (multipart)
+export async function updateProdukWithFile(
+  token: string,
+  id: string,
+  data: Partial<{
+    subkategori_id: string;
+    brand_id: string;
+    nama: string;
+    deskripsi: string;
+    harga: number;
+    status: StatusProduk;
+    existingGambar?: string[];
+  }>,
+  files?: File[]
+): Promise<ProdukRecord> {
+  if (!files || files.length === 0) {
+    return updateProduk(token, id, data);
+  }
+  const form = new FormData();
+  Object.entries(data).forEach(([k, v]) => {
+    if (k === 'existingGambar' && Array.isArray(v)) {
+      form.append('existingGambar', JSON.stringify(v));
+    } else if (v !== undefined && v !== null) {
+      form.append(k, String(v));
+    }
+  });
+  files.forEach((file, index) => {
+    form.append('gambar', file);
+  });
+  const res = await fetch(`${API_URL}/produk/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    } as any,
+    body: form,
+  });
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -131,7 +219,7 @@ export async function deleteProduk(token: string, id: string): Promise<void> {
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Delete produk gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
 }
 
 // Produk Varian functions
@@ -139,7 +227,7 @@ export async function listProdukVarian(token: string, produkId: string): Promise
   const res = await fetch(`${API_URL}/produk/${produkId}/varian`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`List produk varian gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -147,7 +235,7 @@ export async function getProdukVarianById(token: string, varianId: string): Prom
   const res = await fetch(`${API_URL}/produk/varian/${varianId}`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Get produk varian gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -167,7 +255,7 @@ export async function createProdukVarian(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Create produk varian gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -187,7 +275,7 @@ export async function updateProdukVarian(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Update produk varian gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
   return res.json();
 }
 
@@ -196,5 +284,5 @@ export async function deleteProdukVarian(token: string, varianId: string): Promi
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`Delete produk varian gagal: ${res.status}`);
+  if (!res.ok) throw new Error(await getErrorMessage(res));
 }

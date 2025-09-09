@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getProfile } from "../services/auth";
+import Cart from "../components/Cart";
 
 export default function HomePage() {
 	const searchParams = useSearchParams();
@@ -98,6 +99,18 @@ export default function HomePage() {
             <a href="/produk" style={{ marginLeft: 8 }}>
               <button>Kelola Produk</button>
             </a>
+            <a href="/keranjang" style={{ marginLeft: 8 }}>
+              <button>Keranjang</button>
+            </a>
+            <a href="/pesanan/history" style={{ marginLeft: 8 }}>
+              <button>Riwayat Pesanan Saya</button>
+            </a>
+            <a href="/pesanan" style={{ marginLeft: 8 }}>
+              <button>Lihat Pesanan</button>
+            </a>
+            <div style={{ marginLeft: 8, display: 'inline-block' }}>
+              <Cart />
+            </div>
           </div>
           {token && (
             <pre style={{ marginTop: 16, whiteSpace: "pre-wrap" }}>

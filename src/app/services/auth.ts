@@ -35,6 +35,34 @@ export async function getProfile(token: string) {
   return res.json();
 }
 
+// Check if user is admin
+export async function isAdmin(token: string): Promise<boolean> {
+  try {
+    const profile = await getProfile(token);
+    console.log('User profile:', profile); // Debug log
+    // Fix: role is nested inside profile.user.role
+    console.log('User role:', profile.user?.role); // Debug log
+    const isAdminUser = profile.user?.role?.name === 'admin' || profile.user?.role === 'admin';
+    console.log('Is admin:', isAdminUser); // Debug log
+
+    // Also check JWT token payload directly as backup
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT payload role:', payload.role);
+      if (payload.role === 'admin') {
+        return true;
+      }
+    } catch (jwtError) {
+      console.error('Error parsing JWT:', jwtError);
+    }
+
+    return isAdminUser;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
 // Logout
 export async function logoutUser(token: string) {
   const res = await fetch(`${API_URL}/auth/logout`, {
