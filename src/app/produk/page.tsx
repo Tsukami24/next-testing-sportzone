@@ -84,6 +84,7 @@ export default function ProdukPage() {
   const [editVarianStok, setEditVarianStok] = useState("");
   const [editVarianHarga, setEditVarianHarga] = useState("");
   const [editVarianSku, setEditVarianSku] = useState("");
+  const [showAddVarian, setShowAddVarian] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("token");
@@ -291,6 +292,7 @@ export default function ProdukPage() {
       setVarianStok("");
       setVarianHarga("");
       setVarianSku("");
+      setShowAddVarian(null);
       await refresh(token);
     } catch (e: any) {
       alert(e?.message || "Gagal membuat varian produk");
@@ -312,10 +314,11 @@ export default function ProdukPage() {
       // Reset edit form
       setEditVarianId(null);
       setEditVarianUkuran("");
-      setVarianWarna("");
+      setEditVarianWarna("");
       setEditVarianStok("");
       setEditVarianHarga("");
       setEditVarianSku("");
+      setShowAddVarian(null);
       await refresh(token);
     } catch (e: any) {
       alert(e?.message || "Gagal update varian produk");
@@ -983,6 +986,257 @@ export default function ProdukPage() {
                               ))}
                             </div>
                           )}
+
+                        {/* Varian Section */}
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-md font-medium text-gray-900">
+                              Varian Produk ({produk.varian?.length || 0} item)
+                            </h5>
+                            {canManage && (
+                              <button
+                                onClick={() => {
+                                  setSelectedProdukId(produk.id);
+                                  setShowAddVarian(produk.id);
+                                }}
+                                className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                              >
+                                ➕ Tambah Varian
+                              </button>
+                            )}
+                          </div>
+
+                          {produk.varian && produk.varian.length > 0 ? (
+                            <div className="space-y-2">
+                              {produk.varian.map((varian) => (
+                                <div
+                                  key={varian.id}
+                                  className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                                >
+                                  {editVarianId === varian.id ? (
+                                    <div className="space-y-3">
+                                      <h6 className="text-sm font-medium text-gray-900">
+                                        Edit Varian
+                                      </h6>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Ukuran
+                                          </label>
+                                          <input
+                                            placeholder="Masukkan ukuran"
+                                            value={editVarianUkuran}
+                                            onChange={(e) => setEditVarianUkuran(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Warna
+                                          </label>
+                                          <input
+                                            placeholder="Masukkan warna"
+                                            value={editVarianWarna}
+                                            onChange={(e) => setEditVarianWarna(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Stok *
+                                          </label>
+                                          <input
+                                            placeholder="Masukkan stok"
+                                            type="number"
+                                            value={editVarianStok}
+                                            onChange={(e) => setEditVarianStok(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Harga (Rp)
+                                          </label>
+                                          <input
+                                            placeholder="Masukkan harga"
+                                            type="number"
+                                            value={editVarianHarga}
+                                            onChange={(e) => setEditVarianHarga(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            SKU
+                                          </label>
+                                          <input
+                                            placeholder="Masukkan SKU"
+                                            value={editVarianSku}
+                                            onChange={(e) => setEditVarianSku(e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => handleUpdateVarian(varian.id)}
+                                          className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700"
+                                        >
+                                          Simpan
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setEditVarianId(null);
+                                            setEditVarianUkuran("");
+                                            setEditVarianWarna("");
+                                            setEditVarianStok("");
+                                            setEditVarianHarga("");
+                                            setEditVarianSku("");
+                                          }}
+                                          className="px-3 py-1 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-700"
+                                        >
+                                          Batal
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-sm">
+                                        <span className="font-medium">
+                                          {varian.ukuran && `Ukuran: ${varian.ukuran}`}
+                                          {varian.ukuran && varian.warna && " | "}
+                                          {varian.warna && `Warna: ${varian.warna}`}
+                                          {(!varian.ukuran && !varian.warna) && "Varian Default"}
+                                        </span>
+                                        <div className="text-gray-600 mt-1">
+                                          Stok: {varian.stok} |
+                                          Harga: {varian.harga ? formatCurrency(varian.harga) : formatCurrency(produk.harga)} |
+                                          SKU: {varian.sku || "N/A"}
+                                        </div>
+                                      </div>
+                                      {canManage && (
+                                        <div className="flex gap-1">
+                                          <button
+                                            onClick={() => {
+                                              setEditVarianId(varian.id);
+                                              setEditVarianUkuran(varian.ukuran || "");
+                                              setEditVarianWarna(varian.warna || "");
+                                              setEditVarianStok(varian.stok.toString());
+                                              setEditVarianHarga(varian.harga?.toString() || "");
+                                              setEditVarianSku(varian.sku || "");
+                                            }}
+                                            className="px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
+                                          >
+                                            ✏️ Edit
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteVarian(varian.id)}
+                                            className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                                          >
+                                            🗑️ Delete
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">
+                              Belum ada varian untuk produk ini
+                            </p>
+                          )}
+
+                          {/* Add Varian Form */}
+                          {showAddVarian === produk.id && (
+                            <div className="mt-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
+                              <h6 className="text-sm font-medium text-gray-900 mb-3">
+                                Tambah Varian Baru
+                              </h6>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Ukuran
+                                  </label>
+                                  <input
+                                    placeholder="Masukkan ukuran"
+                                    value={varianUkuran}
+                                    onChange={(e) => setVarianUkuran(e.target.value)}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Warna
+                                  </label>
+                                  <input
+                                    placeholder="Masukkan warna"
+                                    value={varianWarna}
+                                    onChange={(e) => setVarianWarna(e.target.value)}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Stok *
+                                  </label>
+                                  <input
+                                    placeholder="Masukkan stok"
+                                    type="number"
+                                    value={varianStok}
+                                    onChange={(e) => setVarianStok(e.target.value)}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Harga (Rp)
+                                  </label>
+                                  <input
+                                    placeholder="Masukkan harga"
+                                    type="number"
+                                    value={varianHarga}
+                                    onChange={(e) => setVarianHarga(e.target.value)}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    SKU
+                                  </label>
+                                  <input
+                                    placeholder="Masukkan SKU"
+                                    value={varianSku}
+                                    onChange={(e) => setVarianSku(e.target.value)}
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  onClick={handleCreateVarian}
+                                  className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700"
+                                >
+                                  Tambah
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowAddVarian(null);
+                                    setVarianUkuran("");
+                                    setVarianWarna("");
+                                    setVarianStok("");
+                                    setVarianHarga("");
+                                    setVarianSku("");
+                                  }}
+                                  className="px-3 py-1 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-700"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
                         <div className="flex flex-wrap gap-2 pt-4">
                           <button
