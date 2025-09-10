@@ -131,6 +131,7 @@ export default function CheckoutPage() {
         tanggal_pesanan: new Date(orderDate).toISOString(),
         total_harga: effectiveTotal,
         alamat_pengiriman: shippingAddress,
+        metode_pembayaran: paymentMethod,
         items: items
       };
 
@@ -140,16 +141,6 @@ export default function CheckoutPage() {
 
       // Submit order
       const order = await createPesanan(token, orderData);
-
-      // Create payment based on selected method
-      const paymentData = {
-        pesanan_id: order.id,
-        metode: paymentMethod,
-        jumlah_pembayaran: effectiveTotal,
-        keterangan: `Pembayaran untuk pesanan #${order.id}`
-      };
-
-      const payment = await createPembayaran(token, paymentData);
 
       // Clear cart after successful order
       if (!draftItems) {
@@ -206,12 +197,33 @@ export default function CheckoutPage() {
           setPaymentLoading(false);
           router.push(`/pesanan/${order.id}`);
         }
-      } else {
-        // For COD, redirect to order detail
-        setSuccess("Pesanan berhasil dibuat! Silakan lakukan pembayaran saat barang sampai.");
-        setTimeout(() => {
-          router.push(`/pesanan/${order.id}`);
-        }, 2000);
+      } else if (paymentMethod === MetodePembayaran.COD) {
+        // Create COD payment record
+        setPaymentLoading(true);
+        setSuccess(`Pesanan berhasil dibuat! Membuat pembayaran COD...`);
+
+        try {
+          await createPembayaran(token, {
+            pesanan_id: order.id,
+            metode: MetodePembayaran.COD,
+            jumlah_pembayaran: effectiveTotal,
+            keterangan: 'Pembayaran COD - Bayar di tempat'
+          });
+
+          setPaymentLoading(false);
+          setSuccess("Pesanan berhasil dibuat dengan pembayaran COD! Silakan lakukan pembayaran saat barang sampai.");
+          setTimeout(() => {
+            router.push(`/pesanan/${order.id}`);
+          }, 2000);
+        } catch (codError: any) {
+          console.error('Error creating COD payment:', codError);
+          setPaymentLoading(false);
+          setError(`Pesanan berhasil dibuat, namun gagal membuat pembayaran COD: ${codError?.message || 'Terjadi kesalahan'}`);
+          // Still redirect to order detail even if COD payment creation fails
+          setTimeout(() => {
+            router.push(`/pesanan/${order.id}`);
+          }, 3000);
+        }
       }
     } catch (e: any) {
       setError(e?.message || "Gagal membuat pesanan");

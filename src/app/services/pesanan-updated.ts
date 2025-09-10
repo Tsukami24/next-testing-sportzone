@@ -52,6 +52,7 @@ export interface CreatePesananDto {
   tanggal_pesanan: string;
   total_harga: number;
   alamat_pengiriman: string;
+  metode_pembayaran: string;
   items: CreatePesananItemDto[];
 }
 

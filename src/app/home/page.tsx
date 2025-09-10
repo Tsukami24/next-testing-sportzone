@@ -99,6 +99,9 @@ export default function HomePage() {
             <a href="/produk" style={{ marginLeft: 8 }}>
               <button>Kelola Produk</button>
             </a>
+            <a href="/admin" style={{ marginLeft: 8 }}>
+              <button>💳 Kelola Pembayaran COD</button>
+            </a>
             <a href="/keranjang" style={{ marginLeft: 8 }}>
               <button>Keranjang</button>
             </a>

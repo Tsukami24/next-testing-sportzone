@@ -6,9 +6,10 @@ export enum MetodePembayaran {
 }
 
 export enum StatusPembayaran {
-  BELUM_BAYAR = 'belum_bayar',
-  SUDAH_BAYAR = 'sudah_bayar',
-  GAGAL = 'gagal'
+  BELUM_BAYAR = 'belum bayar',
+  SUDAH_BAYAR = 'sudah bayar',
+  GAGAL = 'gagal',
+  DIKEMBALIKAN = 'dikembalikan',
 }
 
 export interface PembayaranRecord {
@@ -93,6 +94,25 @@ export async function getPaymentStatus(token: string, pesananId: string): Promis
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Gagal mendapatkan status pembayaran');
+  }
+
+  return response.json();
+}
+
+// Update payment status (for admin)
+export async function updatePaymentStatus(token: string, pembayaranId: string, status: StatusPembayaran): Promise<PembayaranRecord> {
+  const response = await fetch(`${API_URL}/pembayaran/${pembayaranId}/status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Gagal mengupdate status pembayaran');
   }
 
   return response.json();
