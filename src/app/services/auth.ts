@@ -63,6 +63,60 @@ export async function isAdmin(token: string): Promise<boolean> {
   }
 }
 
+// Check if user is petugas
+export async function isPetugas(token: string): Promise<boolean> {
+  try {
+    const profile = await getProfile(token);
+    console.log('User profile:', profile); // Debug log
+    console.log('User role:', profile.user?.role); // Debug log
+    const isPetugasUser = profile.user?.role?.name === 'petugas' || profile.user?.role === 'petugas';
+    console.log('Is petugas:', isPetugasUser); // Debug log
+
+    // Also check JWT token payload directly as backup
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT payload role:', payload.role);
+      if (payload.role === 'petugas') {
+        return true;
+      }
+    } catch (jwtError) {
+      console.error('Error parsing JWT:', jwtError);
+    }
+
+    return isPetugasUser;
+  } catch (error) {
+    console.error('Error checking petugas status:', error);
+    return false;
+  }
+}
+
+// Check if user is customer
+export async function isCustomer(token: string): Promise<boolean> {
+  try {
+    const profile = await getProfile(token);
+    console.log('User profile:', profile); // Debug log
+    console.log('User role:', profile.user?.role); // Debug log
+    const isCustomerUser = profile.user?.role?.name === 'customer' || profile.user?.role === 'customer';
+    console.log('Is customer:', isCustomerUser); // Debug log
+
+    // Also check JWT token payload directly as backup
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT payload role:', payload.role);
+      if (payload.role === 'customer') {
+        return true;
+      }
+    } catch (jwtError) {
+      console.error('Error parsing JWT:', jwtError);
+    }
+
+    return isCustomerUser;
+  } catch (error) {
+    console.error('Error checking customer status:', error);
+    return false;
+  }
+}
+
 // Logout
 export async function logoutUser(token: string) {
   const res = await fetch(`${API_URL}/auth/logout`, {

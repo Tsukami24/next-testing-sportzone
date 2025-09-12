@@ -195,7 +195,7 @@ export default function PesananListPage() {
                     }}>
                       {getStatusText(order.status)}
                     </div>
-                    {/* Add status update dropdown for admin */}
+                    {/* Add status update dropdown for petugas */}
                     <select
                       value={order.status}
                       onChange={async (e) => {
@@ -207,11 +207,11 @@ export default function PesananListPage() {
                           return;
                         }
                         try {
-                          // Check if user is admin before allowing certain status changes
-                          const { isAdmin } = await import("../services/auth");
-                          const admin = await isAdmin(token);
-                          if ((newStatus === "dikirim" || newStatus === "selesai") && !admin) {
-                            alert("Hanya admin yang dapat mengubah status ke dikirim atau selesai");
+                          // Check if user is petugas before allowing status changes
+                          const { isPetugas } = await import("../services/auth");
+                          const petugas = await isPetugas(token);
+                          if (!petugas) {
+                            alert("Hanya petugas yang dapat mengubah status pesanan");
                             return;
                           }
                           await import("../services/pesanan-updated").then(({ updatePesanan }) =>

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getPesananById, PesananRecord, StatusPesanan, updatePesanan } from "../../services/pesanan";
-import { isAdmin } from "../../services/auth";
+import { cancelPesanan } from "../../services/pesanan-updated";
+import { isPetugas, isCustomer } from "../../services/auth";
 import { syncOrderStatusWithPayment } from "../../services/pembayaran";
 
 export default function PesananDetailPage() {
@@ -13,6 +14,7 @@ export default function PesananDetailPage() {
   const [pesanan, setPesanan] = useState<PesananRecord | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUserPetugas, setIsUserPetugas] = useState<boolean>(false);
   const [isUserAdmin, setIsUserAdmin] = useState<boolean>(false);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ export default function PesananDetailPage() {
         }
         setToken(stored);
 
-        // Check if user is admin
-        const adminStatus = await isAdmin(stored);
-        setIsUserAdmin(adminStatus);
+        // Check if user is petugas
+        const petugasStatus = await isPetugas(stored);
+        setIsUserPetugas(petugasStatus);
 
         const id = params.id as string;
         if (!id) {
@@ -332,9 +334,9 @@ export default function PesananDetailPage() {
         </div>
 
         {/* Admin Status Update Section */}
-        {isUserAdmin && (
+        {isUserPetugas && (
           <div style={{ marginBottom: 30 }}>
-            <h3 style={{ margin: '0 0 15px 0', color: '#2c3e50', fontSize: '22px', fontWeight: 'bold' }}>🔧 Update Status Pesanan (Admin)</h3>
+            <h3 style={{ margin: '0 0 15px 0', color: '#2c3e50', fontSize: '22px', fontWeight: 'bold' }}>🔧 Update Status Pesanan (Petugas)</h3>
             <div style={{
               padding: '20px',
               backgroundColor: '#fff9c4',
@@ -375,11 +377,11 @@ export default function PesananDetailPage() {
                       onClick={async () => {
                         if (confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
                           try {
-                            await updatePesanan(token!, pesanan.id, { status: StatusPesanan.DIBATALKAN });
-                            alert('Status pesanan berhasil diperbarui');
+                            await cancelPesanan(token!, pesanan.id);
+                            alert('Pesanan berhasil dibatalkan');
                             window.location.reload();
                           } catch (error: any) {
-                            alert(error?.message || 'Gagal memperbarui status pesanan');
+                            alert(error?.message || 'Gagal membatalkan pesanan');
                           }
                         }
                       }}
