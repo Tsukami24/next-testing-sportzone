@@ -1,12 +1,18 @@
 import { API_URL } from "./auth";
 
 export interface SubkategoriRecord {
-	id: string;
-	nama?: string;
-	deskripsi?: string | null;
-	kategori_olahraga_id: string;
-	created_at?: string | Date;
-	updated_at?: string | Date;
+  id: string;
+  nama?: string;
+  deskripsi?: string | null;
+  kategori_olahraga_id: string;
+  kategoriOlahraga?: {
+    id: string;
+    nama?: string;
+    created_at?: string | Date;
+    updated_at?: string | Date;
+  };
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 function authHeaders(token: string) {

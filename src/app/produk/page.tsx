@@ -626,7 +626,9 @@ export default function ProdukPage() {
                         // Append new previews to existing previews
                         setGambarPreview((prev) => [
                           ...prev,
-                          ...newFilesArray.map((file) => URL.createObjectURL(file)),
+                          ...newFilesArray.map((file) =>
+                            URL.createObjectURL(file)
+                          ),
                         ]);
                       }
                     }}
@@ -645,8 +647,12 @@ export default function ProdukPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setGambar((prev) => prev.filter((_, i) => i !== idx));
-                              setGambarPreview((prev) => prev.filter((_, i) => i !== idx));
+                              setGambar((prev) =>
+                                prev.filter((_, i) => i !== idx)
+                              );
+                              setGambarPreview((prev) =>
+                                prev.filter((_, i) => i !== idx)
+                              );
                             }}
                             className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
                           >
@@ -816,13 +822,20 @@ export default function ProdukPage() {
                                   e.target.files &&
                                   e.target.files.length > 0
                                 ) {
-                                  const newFilesArray = Array.from(e.target.files);
+                                  const newFilesArray = Array.from(
+                                    e.target.files
+                                  );
                                   // Append new files to existing editGambarFile array
-                                  setEditGambarFile((prev) => [...prev, ...newFilesArray]);
+                                  setEditGambarFile((prev) => [
+                                    ...prev,
+                                    ...newFilesArray,
+                                  ]);
                                   // Append new previews to existing previews
                                   setEditGambarPreview((prev) => [
                                     ...prev,
-                                    ...newFilesArray.map((file) => URL.createObjectURL(file)),
+                                    ...newFilesArray.map((file) =>
+                                      URL.createObjectURL(file)
+                                    ),
                                   ]);
                                 }
                               }}
@@ -830,7 +843,9 @@ export default function ProdukPage() {
                             />
                             {editGambarPreview.length > 0 && (
                               <div className="mt-2">
-                                <p className="text-sm font-medium text-gray-700 mb-2">Gambar Baru:</p>
+                                <p className="text-sm font-medium text-gray-700 mb-2">
+                                  Gambar Baru:
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                   {editGambarPreview.map((src, idx) => (
                                     <div key={idx} className="relative">
@@ -860,7 +875,9 @@ export default function ProdukPage() {
                             )}
                             {editGambar.length > 0 && (
                               <div className="mt-2">
-                                <p className="text-sm font-medium text-gray-700 mb-2">Gambar Existing:</p>
+                                <p className="text-sm font-medium text-gray-700 mb-2">
+                                  Gambar Existing:
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                   {editGambar.map((src, idx) => (
                                     <div key={idx} className="relative">
@@ -872,7 +889,9 @@ export default function ProdukPage() {
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          setEditGambar((prev) => prev.filter((_, i) => i !== idx));
+                                          setEditGambar((prev) =>
+                                            prev.filter((_, i) => i !== idx)
+                                          );
                                         }}
                                         className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
                                       >
@@ -957,7 +976,14 @@ export default function ProdukPage() {
 
                         <p className="text-gray-700">{produk.deskripsi}</p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Kategori:
+                            </span>{" "}
+                            {produk.subkategori?.kategoriOlahraga?.nama ||
+                              "N/A"}
+                          </div>
                           <div>
                             <span className="font-medium text-gray-700">
                               Subkategori:
@@ -1026,7 +1052,11 @@ export default function ProdukPage() {
                                           <input
                                             placeholder="Masukkan ukuran"
                                             value={editVarianUkuran}
-                                            onChange={(e) => setEditVarianUkuran(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditVarianUkuran(
+                                                e.target.value
+                                              )
+                                            }
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                           />
                                         </div>
@@ -1037,7 +1067,9 @@ export default function ProdukPage() {
                                           <input
                                             placeholder="Masukkan warna"
                                             value={editVarianWarna}
-                                            onChange={(e) => setEditVarianWarna(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditVarianWarna(e.target.value)
+                                            }
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                           />
                                         </div>
@@ -1049,7 +1081,9 @@ export default function ProdukPage() {
                                             placeholder="Masukkan stok"
                                             type="number"
                                             value={editVarianStok}
-                                            onChange={(e) => setEditVarianStok(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditVarianStok(e.target.value)
+                                            }
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                           />
                                         </div>
@@ -1061,7 +1095,9 @@ export default function ProdukPage() {
                                             placeholder="Masukkan harga"
                                             type="number"
                                             value={editVarianHarga}
-                                            onChange={(e) => setEditVarianHarga(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditVarianHarga(e.target.value)
+                                            }
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                           />
                                         </div>
@@ -1072,14 +1108,18 @@ export default function ProdukPage() {
                                           <input
                                             placeholder="Masukkan SKU"
                                             value={editVarianSku}
-                                            onChange={(e) => setEditVarianSku(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditVarianSku(e.target.value)
+                                            }
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                           />
                                         </div>
                                       </div>
                                       <div className="flex gap-2">
                                         <button
-                                          onClick={() => handleUpdateVarian(varian.id)}
+                                          onClick={() =>
+                                            handleUpdateVarian(varian.id)
+                                          }
                                           className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700"
                                         >
                                           Simpan
@@ -1103,15 +1143,23 @@ export default function ProdukPage() {
                                     <div className="flex items-center justify-between">
                                       <div className="text-sm">
                                         <span className="font-medium">
-                                          {varian.ukuran && `Ukuran: ${varian.ukuran}`}
-                                          {varian.ukuran && varian.warna && " | "}
-                                          {varian.warna && `Warna: ${varian.warna}`}
-                                          {(!varian.ukuran && !varian.warna) && "Varian Default"}
+                                          {varian.ukuran &&
+                                            `Ukuran: ${varian.ukuran}`}
+                                          {varian.ukuran &&
+                                            varian.warna &&
+                                            " | "}
+                                          {varian.warna &&
+                                            `Warna: ${varian.warna}`}
+                                          {!varian.ukuran &&
+                                            !varian.warna &&
+                                            "Varian Default"}
                                         </span>
                                         <div className="text-gray-600 mt-1">
-                                          Stok: {varian.stok} |
-                                          Harga: {varian.harga ? formatCurrency(varian.harga) : formatCurrency(produk.harga)} |
-                                          SKU: {varian.sku || "N/A"}
+                                          Stok: {varian.stok} | Harga:{" "}
+                                          {varian.harga
+                                            ? formatCurrency(varian.harga)
+                                            : formatCurrency(produk.harga)}{" "}
+                                          | SKU: {varian.sku || "N/A"}
                                         </div>
                                       </div>
                                       {canManage && (
@@ -1119,18 +1167,30 @@ export default function ProdukPage() {
                                           <button
                                             onClick={() => {
                                               setEditVarianId(varian.id);
-                                              setEditVarianUkuran(varian.ukuran || "");
-                                              setEditVarianWarna(varian.warna || "");
-                                              setEditVarianStok(varian.stok.toString());
-                                              setEditVarianHarga(varian.harga?.toString() || "");
-                                              setEditVarianSku(varian.sku || "");
+                                              setEditVarianUkuran(
+                                                varian.ukuran || ""
+                                              );
+                                              setEditVarianWarna(
+                                                varian.warna || ""
+                                              );
+                                              setEditVarianStok(
+                                                varian.stok.toString()
+                                              );
+                                              setEditVarianHarga(
+                                                varian.harga?.toString() || ""
+                                              );
+                                              setEditVarianSku(
+                                                varian.sku || ""
+                                              );
                                             }}
                                             className="px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
                                           >
                                             ✏️ Edit
                                           </button>
                                           <button
-                                            onClick={() => handleDeleteVarian(varian.id)}
+                                            onClick={() =>
+                                              handleDeleteVarian(varian.id)
+                                            }
                                             className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
                                           >
                                             🗑️ Delete
@@ -1162,7 +1222,9 @@ export default function ProdukPage() {
                                   <input
                                     placeholder="Masukkan ukuran"
                                     value={varianUkuran}
-                                    onChange={(e) => setVarianUkuran(e.target.value)}
+                                    onChange={(e) =>
+                                      setVarianUkuran(e.target.value)
+                                    }
                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
                                 </div>
@@ -1173,7 +1235,9 @@ export default function ProdukPage() {
                                   <input
                                     placeholder="Masukkan warna"
                                     value={varianWarna}
-                                    onChange={(e) => setVarianWarna(e.target.value)}
+                                    onChange={(e) =>
+                                      setVarianWarna(e.target.value)
+                                    }
                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
                                 </div>
@@ -1185,7 +1249,9 @@ export default function ProdukPage() {
                                     placeholder="Masukkan stok"
                                     type="number"
                                     value={varianStok}
-                                    onChange={(e) => setVarianStok(e.target.value)}
+                                    onChange={(e) =>
+                                      setVarianStok(e.target.value)
+                                    }
                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
                                 </div>
@@ -1197,7 +1263,9 @@ export default function ProdukPage() {
                                     placeholder="Masukkan harga"
                                     type="number"
                                     value={varianHarga}
-                                    onChange={(e) => setVarianHarga(e.target.value)}
+                                    onChange={(e) =>
+                                      setVarianHarga(e.target.value)
+                                    }
                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
                                 </div>
@@ -1208,7 +1276,9 @@ export default function ProdukPage() {
                                   <input
                                     placeholder="Masukkan SKU"
                                     value={varianSku}
-                                    onChange={(e) => setVarianSku(e.target.value)}
+                                    onChange={(e) =>
+                                      setVarianSku(e.target.value)
+                                    }
                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
                                 </div>

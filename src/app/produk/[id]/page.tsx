@@ -15,6 +15,8 @@ export default function ProdukDetailPage() {
   const [produk, setProduk] = useState<ProdukRecord | null>(null);
   const [varian, setVarian] = useState<ProdukVarianRecord[]>([]);
   const [selectedVarian, setSelectedVarian] = useState<ProdukVarianRecord | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +159,25 @@ export default function ProdukDetailPage() {
     return produk?.harga || 0;
   };
 
+  // Extract unique sizes and colors from variants
+  const uniqueSizes = Array.from(new Set(varian.map(v => v.ukuran).filter(Boolean)));
+  const uniqueColors = Array.from(new Set(varian.map(v => v.warna).filter(Boolean)));
+
+  // Find matching variant based on selected size and color
+  const findMatchingVariant = (size: string, color: string): ProdukVarianRecord | null => {
+    return varian.find(v => v.ukuran === size && v.warna === color) || null;
+  };
+
+  // Update selected variant when size or color changes
+  useEffect(() => {
+    if (selectedSize && selectedColor) {
+      const matchingVariant = findMatchingVariant(selectedSize, selectedColor);
+      setSelectedVarian(matchingVariant);
+    } else {
+      setSelectedVarian(null);
+    }
+  }, [selectedSize, selectedColor, varian]);
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -276,30 +297,77 @@ export default function ProdukDetailPage() {
               {varian.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">🎨 Varian Produk</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {varian.map((v) => (
-                      <div
-                        key={v.id}
-                        onClick={() => setSelectedVarian(v)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedVarian?.id === v.id 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="font-medium mb-2">
-                          {v.ukuran && `Ukuran: ${v.ukuran}`}
-                          {v.warna && ` | Warna: ${v.warna}`}
-                        </div>
-                        <div className="text-blue-600 font-semibold">
-                          {formatCurrency(v.harga || produk.harga)}
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                          Stok: {v.stok}
-                        </div>
+
+                  {/* Size and Color Selection */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Size Selection */}
+                    {uniqueSizes.length > 0 && (
+                      <div>
+                        <label className="block mb-2 font-medium text-gray-700">
+                          📏 Pilih Ukuran:
+                        </label>
+                        <select
+                          value={selectedSize}
+                          onChange={(e) => setSelectedSize(e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        >
+                          <option value="">Pilih ukuran</option>
+                          {uniqueSizes.map((size) => (
+                            <option key={size} value={size}>
+                              {size}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Color Selection */}
+                    {uniqueColors.length > 0 && (
+                      <div>
+                        <label className="block mb-2 font-medium text-gray-700">
+                          🎨 Pilih Warna:
+                        </label>
+                        <select
+                          value={selectedColor}
+                          onChange={(e) => setSelectedColor(e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        >
+                          <option value="">Pilih warna</option>
+                          {uniqueColors.map((color) => (
+                            <option key={color} value={color}>
+                              {color}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Selected Variant Info */}
+                  {selectedVarian && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="font-medium text-blue-900 mb-2">
+                        Varian Terpilih: {selectedVarian.ukuran && `Ukuran ${selectedVarian.ukuran}`}
+                        {selectedVarian.ukuran && selectedVarian.warna && ' | '}
+                        {selectedVarian.warna && `Warna ${selectedVarian.warna}`}
+                      </div>
+                      <div className="text-blue-700 font-semibold">
+                        Harga: {formatCurrency(selectedVarian.harga || produk.harga)}
+                      </div>
+                      <div className="text-blue-600 text-sm">
+                        Stok tersedia: {selectedVarian.stok}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No matching variant warning */}
+                  {selectedSize && selectedColor && !selectedVarian && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-red-700 font-medium">
+                        ⚠️ Kombinasi ukuran dan warna yang dipilih tidak tersedia
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
