@@ -2,6 +2,7 @@ import { API_URL } from "./auth";
 import { SubkategoriRecord } from "./subkategori";
 import { BrandRecord } from "./brand";
 
+
 // Status produk enum
 export enum StatusProduk {
   AKTIF = "aktif",
@@ -216,6 +217,14 @@ export async function updateProdukWithFile(
 
 export async function deleteProduk(token: string, id: string): Promise<void> {
   const res = await fetch(`${API_URL}/produk/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(await getErrorMessage(res));
+}
+
+export async function deleteProdukGambar(token: string, id: string, gambarUrl: string): Promise<void> {
+  const res = await fetch(`${API_URL}/produk/${id}/gambar/${encodeURIComponent(gambarUrl)}`, {
     method: "DELETE",
     headers: authHeaders(token),
   });

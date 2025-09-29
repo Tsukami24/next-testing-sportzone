@@ -165,17 +165,20 @@ export default function ProdukDetailPage() {
 
   // Find matching variant based on selected size and color
   const findMatchingVariant = (size: string, color: string): ProdukVarianRecord | null => {
-    return varian.find(v => v.ukuran === size && v.warna === color) || null;
+    if (size && color) {
+      return varian.find(v => v.ukuran === size && v.warna === color) || null;
+    } else if (size) {
+      return varian.find(v => v.ukuran === size && (!v.warna || v.warna === null)) || null;
+    } else if (color) {
+      return varian.find(v => v.warna === color && (!v.ukuran || v.ukuran === null)) || null;
+    }
+    return null;
   };
 
   // Update selected variant when size or color changes
   useEffect(() => {
-    if (selectedSize && selectedColor) {
-      const matchingVariant = findMatchingVariant(selectedSize, selectedColor);
-      setSelectedVarian(matchingVariant);
-    } else {
-      setSelectedVarian(null);
-    }
+    const matchingVariant = findMatchingVariant(selectedSize, selectedColor);
+    setSelectedVarian(matchingVariant);
   }, [selectedSize, selectedColor, varian]);
 
   if (loading) {
@@ -361,10 +364,10 @@ export default function ProdukDetailPage() {
                   )}
 
                   {/* No matching variant warning */}
-                  {selectedSize && selectedColor && !selectedVarian && (
+                  {(selectedSize || selectedColor) && !selectedVarian && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                       <div className="text-red-700 font-medium">
-                        ⚠️ Kombinasi ukuran dan warna yang dipilih tidak tersedia
+                        ⚠️ Varian yang dipilih tidak tersedia
                       </div>
                     </div>
                   )}

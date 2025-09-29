@@ -8,6 +8,7 @@ import {
   createProduk,
   updateProduk,
   deleteProduk,
+  deleteProdukGambar,
   getProdukBySubkategori,
   getProdukByBrand,
   ProdukRecord,
@@ -18,9 +19,13 @@ import {
   deleteProdukVarian,
   ProdukVarianRecord,
   createProdukWithFile,
-  updateProdukWithFile
+  updateProdukWithFile,
 } from "../services/produk";
-import { listSubkategori, listSubkategoriByKategori, SubkategoriRecord } from "../services/subkategori";
+import {
+  listSubkategori,
+  listSubkategoriByKategori,
+  SubkategoriRecord,
+} from "../services/subkategori";
 import { listKategori, KategoriRecord } from "../services/kategori";
 import { listBrand, BrandRecord } from "../services/brand";
 import { API_URL } from "../services/auth";
@@ -57,17 +62,23 @@ export default function ProdukPage() {
   const [editOriginalGambar, setEditOriginalGambar] = useState<string[]>([]);
   const [editGambarFile, setEditGambarFile] = useState<File[]>([]);
   const [editGambarPreview, setEditGambarPreview] = useState<string[]>([]);
-  const [editStatus, setEditStatus] = useState<StatusProduk>(StatusProduk.AKTIF);
+  const [editStatus, setEditStatus] = useState<StatusProduk>(
+    StatusProduk.AKTIF
+  );
 
   // Filter state
   const [filterSubkategori, setFilterSubkategori] = useState("");
   const [filterBrand, setFilterBrand] = useState("");
 
   // Dropdown data state
-  const [subkategoriList, setSubkategoriList] = useState<SubkategoriRecord[]>([]);
+  const [subkategoriList, setSubkategoriList] = useState<SubkategoriRecord[]>(
+    []
+  );
   const [brandList, setBrandList] = useState<BrandRecord[]>([]);
   const [kategoriList, setKategoriList] = useState<KategoriRecord[]>([]);
-  const [filteredSubkategoriList, setFilteredSubkategoriList] = useState<SubkategoriRecord[]>([]);
+  const [filteredSubkategoriList, setFilteredSubkategoriList] = useState<
+    SubkategoriRecord[]
+  >([]);
 
   // Varian state
   const [selectedProdukId, setSelectedProdukId] = useState<string | null>(null);
@@ -105,12 +116,13 @@ export default function ProdukPage() {
       setCanManage(roleName === "petugas" || roleName === "admin");
 
       // Load subkategori, brand, and produk data
-      const [subkategoriData, brandData, produkData, kategoriData] = await Promise.all([
-        listSubkategori(currentToken),
-        listBrand(currentToken),
-        listProduk(currentToken),
-        listKategori(currentToken)
-      ]);
+      const [subkategoriData, brandData, produkData, kategoriData] =
+        await Promise.all([
+          listSubkategori(currentToken),
+          listBrand(currentToken),
+          listProduk(currentToken),
+          listKategori(currentToken),
+        ]);
 
       setSubkategoriList(subkategoriData);
       setBrandList(brandData);
@@ -124,10 +136,10 @@ export default function ProdukPage() {
 
   function resolveImageUrl(src?: string): string | undefined {
     if (!src) return undefined;
-    if (src.startsWith('http://') || src.startsWith('https://')) return src;
-    if (src.startsWith('/')) return `${API_URL}${src}`;
+    if (src.startsWith("http://") || src.startsWith("https://")) return src;
+    if (src.startsWith("/")) return `${API_URL}${src}`;
     // encode spaces minimally
-    const cleaned = src.replace(/\s/g, '%20');
+    const cleaned = src.replace(/\s/g, "%20");
     return `${API_URL}/${cleaned}`;
   }
 
@@ -143,14 +155,16 @@ export default function ProdukPage() {
       }
 
       // Load varian data for each produk (fallback ke data yang sudah ada jika fetch gagal)
-      const produksWithVarian = await Promise.all(data.map(async (produk) => {
-        try {
-          const varian = await listProdukVarian(currentToken, produk.id);
-          return { ...produk, varian };
-        } catch (e) {
-          return { ...produk, varian: produk.varian || [] };
-        }
-      }));
+      const produksWithVarian = await Promise.all(
+        data.map(async (produk) => {
+          try {
+            const varian = await listProdukVarian(currentToken, produk.id);
+            return { ...produk, varian };
+          } catch (e) {
+            return { ...produk, varian: produk.varian || [] };
+          }
+        })
+      );
 
       setProduks(produksWithVarian);
       setError(null);
@@ -162,7 +176,14 @@ export default function ProdukPage() {
   async function handleCreateProduk() {
     if (!token) return alert("Belum login");
     if (!canManage) return alert("Fitur ini hanya untuk petugas/admin");
-    if (!kategori_id || !subkategori_id || !brand_id || !nama || !deskripsi || !harga) {
+    if (
+      !kategori_id ||
+      !subkategori_id ||
+      !brand_id ||
+      !nama ||
+      !deskripsi ||
+      !harga
+    ) {
       return alert("Semua field wajib diisi kecuali gambar");
     }
     try {
@@ -191,7 +212,6 @@ export default function ProdukPage() {
         });
       }
 
-
       // Reset form
       setKategoriId("");
       setSubkategoriId("");
@@ -212,6 +232,23 @@ export default function ProdukPage() {
     if (!token) return alert("Belum login");
     if (!canManage) return alert("Fitur ini hanya untuk petugas/admin");
     try {
+      // 1. Hapus gambar yang sudah dihapus user dari UI
+      const deletedImages = editOriginalGambar.filter(img => !editGambar.includes(img));
+      for (const img of deletedImages) {
+        try {
+          // Defensive: check if img is a valid string and not empty
+          if (typeof img === "string" && img.trim() !== "") {
+            await deleteProdukGambar(token, id, img);
+          } else {
+            console.warn("Skipping invalid image URL for deletion:", img);
+          }
+        } catch (deleteError) {
+          console.error('Error deleting image:', deleteError);
+          // Continue with other deletions even if one fails
+        }
+      }
+
+      // 2. Update produk dengan data baru
       const updateData: any = {};
       if (editKategoriId) updateData.kategori_id = editKategoriId;
       if (editSubkategoriId) updateData.subkategori_id = editSubkategoriId;
@@ -222,18 +259,17 @@ export default function ProdukPage() {
       if (editStatus) updateData.status = editStatus;
 
       // Handle gambar updates
-      if (editGambar.length > 0) {
-        // Send remaining existing images - backend will combine with new uploads
-        updateData.gambar = [...editGambar];
+      if (editGambarFile.length > 0) {
+        // Use multipart upload for new files, backend will replace images with existing + new
+        // So we need to send existing images explicitly as array
+        updateData.existingGambar = editGambar;
+        const updatedProduct = await updateProdukWithFile(token, id, updateData, editGambarFile);
+      } else {
+        // No new files, update with remaining existing images
+        updateData.gambar = editGambar;
+        const updatedProduct = await updateProduk(token, id, updateData);
       }
 
-      let updatedProduct;
-      if (editGambarFile.length > 0) {
-        // Backend controller will combine existing images with new uploaded images
-        updatedProduct = await updateProdukWithFile(token, id, updateData, editGambarFile);
-      } else {
-        updatedProduct = await updateProduk(token, id, updateData);
-      }
       // Reset edit form
       setEditId(null);
       setEditKategoriId("");
@@ -248,12 +284,8 @@ export default function ProdukPage() {
       setEditGambarPreview([]);
       setEditStatus(StatusProduk.AKTIF);
 
-      // Update local state with the final product if available, otherwise refresh
-      if (updatedProduct) {
-        setProduks(prev => prev.map(p => p.id === id ? updatedProduct : p));
-      } else {
-        await refresh(token);
-      }
+      // Always refresh to ensure UI shows the latest images from server
+      await refresh(token);
     } catch (e: any) {
       alert(e?.message || "Gagal update produk");
     }
@@ -284,7 +316,7 @@ export default function ProdukPage() {
         warna: varianWarna || undefined,
         stok: parseInt(varianStok),
         harga: varianHarga ? parseFloat(varianHarga) : undefined,
-        sku: varianSku || undefined
+        sku: varianSku || undefined,
       });
       // Reset form
       setVarianUkuran("");
@@ -304,10 +336,13 @@ export default function ProdukPage() {
     if (!canManage) return alert("Fitur ini hanya untuk petugas/admin");
     try {
       const updateData: any = {};
-      if (editVarianUkuran !== undefined) updateData.ukuran = editVarianUkuran || null;
-      if (editVarianWarna !== undefined) updateData.warna = editVarianWarna || null;
+      if (editVarianUkuran !== undefined)
+        updateData.ukuran = editVarianUkuran || null;
+      if (editVarianWarna !== undefined)
+        updateData.warna = editVarianWarna || null;
       if (editVarianStok) updateData.stok = parseInt(editVarianStok);
-      if (editVarianHarga !== undefined) updateData.harga = editVarianHarga ? parseFloat(editVarianHarga) : null;
+      if (editVarianHarga !== undefined)
+        updateData.harga = editVarianHarga ? parseFloat(editVarianHarga) : null;
       if (editVarianSku !== undefined) updateData.sku = editVarianSku || null;
 
       await updateProdukVarian(token, varianId, updateData);
@@ -351,19 +386,28 @@ export default function ProdukPage() {
   }
 
   function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR'
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
     }).format(amount);
   }
 
   function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
     });
   }
 

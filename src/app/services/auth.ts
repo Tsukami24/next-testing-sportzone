@@ -127,3 +127,33 @@ export async function logoutUser(token: string) {
   });
   return res.json();
 }
+
+// Forgot Password
+export async function forgotPassword(email: string) {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return res.json();
+}
+
+// Verify OTP
+export async function verifyOtp(email: string, otp: string) {
+  const res = await fetch(`${API_URL}/auth/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+  return res.json();
+}
+
+// Reset Password
+export async function resetPassword(email: string, otp: string, newPassword: string) {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp, newPassword }),
+  });
+  return res.json();
+}
