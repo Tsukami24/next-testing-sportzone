@@ -22,6 +22,7 @@ export default function AuthPage() {
   const [regUsername, setRegUsername] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [regPhone, setRegPhone] = useState("");
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -36,7 +37,7 @@ export default function AuthPage() {
 
   // --- register
   async function handleRegister() {
-    const res = await registerUser(regUsername, regEmail, regPassword);
+    const res = await registerUser(regUsername, regEmail, regPassword, regPhone);
     alert("Register: " + JSON.stringify(res));
   }
 
@@ -148,6 +149,11 @@ export default function AuthPage() {
           type="password"
           value={regPassword}
           onChange={(e) => setRegPassword(e.target.value)}
+        />
+        <input
+          placeholder="Phone"
+          value={regPhone}
+          onChange={(e) => setRegPhone(e.target.value)}
         />
         <button onClick={handleRegister}>Register</button>
 

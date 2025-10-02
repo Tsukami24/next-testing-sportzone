@@ -73,6 +73,11 @@ export default function HomePage() {
               <p>
                 <strong>Email:</strong> {profile.email}
               </p>
+              {profile.phone && (
+                <p>
+                  <strong>Phone:</strong> {profile.phone}
+                </p>
+              )}
               {profile?.role?.name && (
                 <p>
                   <strong>Role:</strong> {profile.role.name}

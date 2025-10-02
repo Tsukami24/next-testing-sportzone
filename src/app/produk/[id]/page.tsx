@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { getProdukById, ProdukRecord, StatusProduk, listProdukVarian, ProdukVarianRecord } from "../../services/produk";
 import { useCart } from "../../contexts/CartContext";
 import { addKeranjangItem } from "../../services/keranjang";
-import { API_URL } from "../../services/auth";
+import { API_URL, getProfile } from "../../services/auth";
+import StarRating from "../../components/StarRating";
+import { getAverageRating, createRating, updateRating, getRatingsByProduct } from "../../services/rating";
 
 export default function ProdukDetailPage() {
   const params = useParams();
@@ -20,6 +22,13 @@ export default function ProdukDetailPage() {
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Rating states
+  const [averageRating, setAverageRating] = useState(0);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [userRatingId, setUserRatingId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [ratingCount, setRatingCount] = useState(0);
 
   useEffect(() => {
     async function init() {
@@ -41,13 +50,32 @@ export default function ProdukDetailPage() {
 
         const data = await getProdukById(stored, id);
         setProduk(data);
-        
+
         // Load product variants if available
         try {
           const varianData = await listProdukVarian(stored, id);
           setVarian(varianData);
         } catch (e) {
           console.log('No variants available for this product');
+        }
+
+        // Load ratings and user rating
+        try {
+          const avgRes = await getAverageRating(id);
+          setAverageRating(avgRes.averageRating || 0);
+
+          const profileRes = await getProfile(stored);
+          setProfile(profileRes.user);
+
+          const ratings = await getRatingsByProduct(id);
+          setRatingCount(ratings.length);
+          const userRatingObj = ratings.find((r: any) => r.user.id === profileRes.user.id);
+          if (userRatingObj) {
+            setUserRating(userRatingObj.rating);
+            setUserRatingId(userRatingObj.id);
+          }
+        } catch (e) {
+          console.error("Failed to load ratings", e);
         }
       } catch (e: any) {
         setError(e?.message || "Gagal memuat detail produk");
@@ -196,8 +224,8 @@ export default function ProdukDetailPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-700 mb-4">{error}</p>
-          <a 
-            href="/produk" 
+          <a
+            href="/produk"
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             ← Kembali ke Daftar Produk
@@ -212,8 +240,8 @@ export default function ProdukDetailPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="bg-gray-50 rounded-lg p-6">
           <p className="text-gray-700 mb-4">Produk tidak ditemukan</p>
-          <a 
-            href="/produk" 
+          <a
+            href="/produk"
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             ← Kembali ke Daftar Produk
@@ -226,8 +254,8 @@ export default function ProdukDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <a 
-          href="/produk" 
+        <a
+          href="/produk"
           className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
         >
           ← Kembali ke Daftar Produk
@@ -242,6 +270,62 @@ export default function ProdukDetailPage() {
             <p className="text-gray-500 font-mono">
               ID: {produk.id}
             </p>
+          </div>
+
+          {/* Rating Section */}
+          <div className="mb-8 p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">⭐ Rating Produk</h3>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-2xl font-bold text-yellow-600">
+                {averageRating.toFixed(1)} ⭐
+              </div>
+              <div className="text-gray-600">
+                ({ratingCount} orang memberikan rating)
+              </div>
+            </div>
+            {profile && (
+              <div className="mb-4">
+                <label className="block mb-2 font-medium text-gray-700">
+                  Berikan rating Anda:
+                </label>
+                <StarRating
+                  rating={userRating || 0}
+                  onRatingChange={async (newRating) => {
+                    try {
+                      if (userRatingId) {
+                        // Update existing rating
+                        await updateRating(userRatingId, newRating, token || "");
+                      } else {
+                        // Create new rating
+                        await createRating(profile.id, produk.id, newRating, token || "");
+                      }
+                      // Refresh ratings
+                      const avgRes = await getAverageRating(produk.id);
+                      setAverageRating(avgRes.averageRating || 0);
+                      const ratings = await getRatingsByProduct(produk.id);
+                      setRatingCount(ratings.length);
+                      setUserRating(newRating);
+                      if (!userRatingId) {
+                        const userRatingObj = ratings.find((r: any) => r.user.id === profile.id);
+                        if (userRatingObj) {
+                          setUserRatingId(userRatingObj.id);
+                        }
+                      }
+                      alert('Rating berhasil disimpan!');
+                    } catch (e) {
+                      console.error('Failed to save rating', e);
+                      alert('Gagal menyimpan rating');
+                    }
+                  }}
+                  readonly={false}
+                />
+              </div>
+            )}
+            {!profile && (
+              <div className="text-gray-600">
+                Login untuk memberikan rating
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -282,16 +366,16 @@ export default function ProdukDetailPage() {
                   </div>
                 </div>
                 <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                  produk.status === StatusProduk.AKTIF 
-                    ? 'bg-green-100 text-green-800' 
-                    : produk.status === StatusProduk.NONAKTIF 
-                      ? 'bg-red-100 text-red-800' 
+                  produk.status === StatusProduk.AKTIF
+                    ? 'bg-green-100 text-green-800'
+                    : produk.status === StatusProduk.NONAKTIF
+                      ? 'bg-red-100 text-red-800'
                       : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {produk.status === StatusProduk.AKTIF 
-                    ? '✅ Aktif' 
-                    : produk.status === StatusProduk.NONAKTIF 
-                      ? '❌ Nonaktif' 
+                  {produk.status === StatusProduk.AKTIF
+                    ? '✅ Aktif'
+                    : produk.status === StatusProduk.NONAKTIF
+                      ? '❌ Nonaktif'
                       : '⚠️ Stok Habis'}
                 </div>
               </div>
@@ -377,7 +461,7 @@ export default function ProdukDetailPage() {
               {/* Add to Cart Section */}
               <div className="mb-8 p-6 bg-gray-50 rounded-lg">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">🛒 Beli Produk</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
                     <label className="block mb-2 font-medium text-gray-700">
@@ -410,7 +494,7 @@ export default function ProdukDetailPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block mb-2 font-medium text-gray-700">
                       Total Harga:
@@ -513,13 +597,13 @@ export default function ProdukDetailPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
-            <button 
+            <button
               onClick={() => router.push(`/produk`)}
               className="py-3 px-6 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
               ← Kembali ke Daftar
             </button>
-            <button 
+            <button
               onClick={() => router.push(`/produk`)}
               className="py-3 px-6 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
             >
