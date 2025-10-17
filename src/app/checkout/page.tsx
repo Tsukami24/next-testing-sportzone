@@ -13,7 +13,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../contexts/CartContext';
 import { createPesanan, CreatePesananDto, CreatePesananItemDto } from '../services/pesanan';
-import { createPembayaran, createMidtransPayment, MetodePembayaran } from '../services/pembayaran';
+import { createCodPayment, createMidtransPayment, MetodePembayaran } from '../services/pembayaran';
 import { getProfile } from '../services/auth';
 
 export default function CheckoutPage() {
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   // Form state
   const [shippingAddress, setShippingAddress] = useState('');
   const [orderDate, setOrderDate] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<MetodePembayaran>(MetodePembayaran.MIDTRANS);
+  const [paymentMethod, setPaymentMethod] = useState<MetodePembayaran>(MetodePembayaran.GOPAY);
   const snapScriptLoaded = useRef(false);
 
   useEffect(() => {
@@ -131,7 +131,6 @@ export default function CheckoutPage() {
         tanggal_pesanan: new Date(orderDate).toISOString(),
         total_harga: effectiveTotal,
         alamat_pengiriman: shippingAddress,
-        metode_pembayaran: paymentMethod,
         items: items
       };
 
@@ -149,17 +148,53 @@ export default function CheckoutPage() {
       try { localStorage.removeItem('checkoutDraft'); } catch {}
 
       // Handle different payment methods
-      if (paymentMethod === MetodePembayaran.MIDTRANS) {
+      if (paymentMethod === MetodePembayaran.COD) {
+        // Create COD payment record
+        setPaymentLoading(true);
+        setSuccess(`Pesanan berhasil dibuat! Membuat pembayaran COD...`);
+
+        try {
+          await createCodPayment(token, order.id);
+
+          setPaymentLoading(false);
+          setSuccess("Pesanan berhasil dibuat dengan pembayaran COD! Silakan lakukan pembayaran saat barang sampai.");
+          setTimeout(() => {
+            router.push(`/pesanan/${order.id}`);
+          }, 2000);
+        } catch (codError: any) {
+          console.error('Error creating COD payment:', codError);
+          setPaymentLoading(false);
+          setError(`Pesanan berhasil dibuat, namun gagal membuat pembayaran COD: ${codError?.message || 'Terjadi kesalahan'}`);
+          // Still redirect to order detail even if COD payment creation fails
+          setTimeout(() => {
+            router.push(`/pesanan/${order.id}`);
+          }, 3000);
+        }
+      } else {
+        // Midtrans payment for other methods
         setPaymentLoading(true);
         setSuccess(`Pesanan berhasil dibuat! Memproses pembayaran...`);
 
+        // Map payment method to Midtrans enabled payments
+        const paymentMethodMap: Record<MetodePembayaran, string[]> = {
+          [MetodePembayaran.GOPAY]: ['gopay'],
+          [MetodePembayaran.OVO]: ['ovo'],
+          [MetodePembayaran.DANA]: ['dana'],
+          [MetodePembayaran.QRIS]: ['qris'],
+          [MetodePembayaran.SHOPEEPAY]: ['shopeepay'],
+          [MetodePembayaran.COD]: [], // This won't be reached
+        };
+
+        const enabledPayments = paymentMethodMap[paymentMethod] || [];
+
         // Use Midtrans Snap popup
-        const midtransData = await createMidtransPayment(token, order.id);
+        const midtransData = await createMidtransPayment(token, order.id, paymentMethod);
         console.log('Midtrans snap object:', window.snap);
         console.log('Midtrans token:', midtransData.token);
         if (window.snap && midtransData.token) {
           try {
             window.snap.pay(midtransData.token, {
+              enabledPayments: enabledPayments,
               onSuccess: function(result: any) {
                 setPaymentLoading(false);
                 setSuccess(`Pembayaran berhasil! Order ID: ${result.order_id}`);
@@ -196,33 +231,6 @@ export default function CheckoutPage() {
           // Fallback to order detail if no redirect URL
           setPaymentLoading(false);
           router.push(`/pesanan/${order.id}`);
-        }
-      } else if (paymentMethod === MetodePembayaran.COD) {
-        // Create COD payment record
-        setPaymentLoading(true);
-        setSuccess(`Pesanan berhasil dibuat! Membuat pembayaran COD...`);
-
-        try {
-          await createPembayaran(token, {
-            pesanan_id: order.id,
-            metode: MetodePembayaran.COD,
-            jumlah_pembayaran: effectiveTotal,
-            keterangan: 'Pembayaran COD - Bayar di tempat'
-          });
-
-          setPaymentLoading(false);
-          setSuccess("Pesanan berhasil dibuat dengan pembayaran COD! Silakan lakukan pembayaran saat barang sampai.");
-          setTimeout(() => {
-            router.push(`/pesanan/${order.id}`);
-          }, 2000);
-        } catch (codError: any) {
-          console.error('Error creating COD payment:', codError);
-          setPaymentLoading(false);
-          setError(`Pesanan berhasil dibuat, namun gagal membuat pembayaran COD: ${codError?.message || 'Terjadi kesalahan'}`);
-          // Still redirect to order detail even if COD payment creation fails
-          setTimeout(() => {
-            router.push(`/pesanan/${order.id}`);
-          }, 3000);
         }
       }
     } catch (e: any) {
@@ -489,7 +497,11 @@ export default function CheckoutPage() {
                   cursor: 'pointer'
                 }}
               >
-                <option value={MetodePembayaran.MIDTRANS}>💳 Midtrans (Online Payment)</option>
+                <option value={MetodePembayaran.GOPAY}>💳 GOPAY</option>
+                <option value={MetodePembayaran.OVO}>💳 OVO</option>
+                <option value={MetodePembayaran.DANA}>💳 DANA</option>
+                <option value={MetodePembayaran.QRIS}>💳 QRIS</option>
+                <option value={MetodePembayaran.SHOPEEPAY}>💳 SHOPEEPAY</option>
                 <option value={MetodePembayaran.COD}>🚚 COD (Bayar di Tempat)</option>
               </select>
             </div>

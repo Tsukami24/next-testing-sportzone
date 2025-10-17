@@ -1,8 +1,12 @@
 import { API_URL } from './auth';
 
 export enum MetodePembayaran {
-  MIDTRANS = 'midtrans',
-  COD = 'cod'
+  COD = 'cod',
+  GOPAY = 'gopay',
+  OVO = 'ovo',
+  DANA = 'dana',
+  QRIS = 'qris',
+  SHOPEEPAY = 'shopeepay',
 }
 
 export enum StatusPembayaran {
@@ -14,20 +18,11 @@ export enum StatusPembayaran {
 
 export interface PembayaranRecord {
   id: string;
-  pesanan_id: string;
-  metode: MetodePembayaran;
+  pesanan_id?: string; // Optional since backend uses relation
+  metode: MetodePembayaran | null;
   status: StatusPembayaran;
-  jumlah_pembayaran: number;
-  keterangan?: string;
+  bukti_pembayaran: string | null;
   created_at: string;
-  updated_at: string;
-}
-
-export interface CreatePembayaranDto {
-  pesanan_id: string;
-  metode: MetodePembayaran;
-  jumlah_pembayaran: number;
-  keterangan?: string;
 }
 
 export interface MidtransPaymentResponse {
@@ -35,15 +30,15 @@ export interface MidtransPaymentResponse {
   redirect_url: string;
 }
 
-// Create pembayaran record
-export async function createPembayaran(token: string, data: CreatePembayaranDto): Promise<PembayaranRecord> {
+// Create pembayaran record (general)
+export async function createPembayaran(token: string, pesananId: string): Promise<PembayaranRecord> {
   const response = await fetch(`${API_URL}/pembayaran`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ pesananId }),
   });
 
   if (!response.ok) {
@@ -54,10 +49,33 @@ export async function createPembayaran(token: string, data: CreatePembayaranDto)
   return response.json();
 }
 
+// Create COD payment
+export async function createCodPayment(token: string, pesananId: string): Promise<PembayaranRecord> {
+  const response = await fetch(`${API_URL}/pembayaran/cod`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ pesananId, metode: MetodePembayaran.COD }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Gagal membuat pembayaran COD');
+  }
+
+  return response.json();
+}
+
 // Initiate Midtrans payment
-export async function createMidtransPayment(token: string, pesananId: string): Promise<MidtransPaymentResponse> {
+export async function createMidtransPayment(token: string, pesananId: string, metode?: MetodePembayaran): Promise<MidtransPaymentResponse> {
   console.log('Calling Midtrans API:', `${API_URL}/pembayaran/initiate`);
-  console.log('Request body:', { pesananId });
+  const requestBody: any = { pesananId };
+  if (metode) {
+    requestBody.metode = metode;
+  }
+  console.log('Request body:', requestBody);
 
   const response = await fetch(`${API_URL}/pembayaran/initiate`, {
     method: 'POST',
@@ -65,7 +83,7 @@ export async function createMidtransPayment(token: string, pesananId: string): P
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ pesananId }),
+    body: JSON.stringify(requestBody),
   });
 
   console.log('API Response status:', response.status);
@@ -118,27 +136,21 @@ export async function updatePaymentStatus(token: string, pembayaranId: string, s
   return response.json();
 }
 
-// Check and update order status based on payment status
-export async function syncOrderStatusWithPayment(token: string, pesananId: string): Promise<{updated: boolean, message: string}> {
-  try {
-    // Get payment status
-    const payment = await getPaymentStatus(token, pesananId);
+// Sync order status with payment status
+export async function syncOrderStatusWithPayment(token: string, pesananId: string): Promise<{ updated: boolean }> {
+  const response = await fetch(`${API_URL}/pembayaran/sync-order-status/${pesananId}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
 
-    // If payment is successful and order is still pending, update order status
-    if (payment.status === StatusPembayaran.SUDAH_BAYAR) {
-      // Import here to avoid circular dependency
-      const { getPesananById, updatePesanan, StatusPesanan } = await import('./pesanan');
-
-      const order = await getPesananById(token, pesananId);
-
-      if (order.status === StatusPesanan.PENDING) {
-        await updatePesanan(token, pesananId, { status: StatusPesanan.DIPROSES });
-        return { updated: true, message: 'Status pesanan berhasil diperbarui ke DIPROSES' };
-      }
-    }
-
-    return { updated: false, message: 'Tidak ada pembaruan status yang diperlukan' };
-  } catch (error: any) {
-    throw new Error(error?.message || 'Gagal sinkronisasi status pesanan');
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Gagal sinkronisasi status pesanan dengan pembayaran');
   }
+
+  return response.json();
 }
+
+
