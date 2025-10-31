@@ -2,12 +2,11 @@ import { API_URL } from "./auth";
 import { SubkategoriRecord } from "./subkategori";
 import { BrandRecord } from "./brand";
 
-
 // Status produk enum
 export enum StatusProduk {
   AKTIF = "aktif",
   NONAKTIF = "nonaktif",
-  STOK_HABIS = "stok habis"
+  STOK_HABIS = "stok habis",
 }
 
 // Interface for Produk entity
@@ -19,6 +18,7 @@ export interface ProdukRecord {
   nama: string;
   deskripsi: string;
   harga: number;
+  stok?: number | null;
   gambar?: string[];
   status: StatusProduk;
   created_at: string;
@@ -72,7 +72,10 @@ export async function listProduk(token: string): Promise<ProdukRecord[]> {
   return res.json();
 }
 
-export async function getProdukById(token: string, id: string): Promise<ProdukRecord> {
+export async function getProdukById(
+  token: string,
+  id: string
+): Promise<ProdukRecord> {
   const res = await fetch(`${API_URL}/produk/${id}`, {
     headers: authHeaders(token),
   });
@@ -80,7 +83,10 @@ export async function getProdukById(token: string, id: string): Promise<ProdukRe
   return res.json();
 }
 
-export async function getProdukBySubkategori(token: string, subkategoriId: string): Promise<ProdukRecord[]> {
+export async function getProdukBySubkategori(
+  token: string,
+  subkategoriId: string
+): Promise<ProdukRecord[]> {
   const res = await fetch(`${API_URL}/produk/subkategori/${subkategoriId}`, {
     headers: authHeaders(token),
   });
@@ -88,7 +94,10 @@ export async function getProdukBySubkategori(token: string, subkategoriId: strin
   return res.json();
 }
 
-export async function getProdukByBrand(token: string, brandId: string): Promise<ProdukRecord[]> {
+export async function getProdukByBrand(
+  token: string,
+  brandId: string
+): Promise<ProdukRecord[]> {
   const res = await fetch(`${API_URL}/produk/brand/${brandId}`, {
     headers: authHeaders(token),
   });
@@ -105,6 +114,7 @@ export async function createProduk(
     nama: string;
     deskripsi: string;
     harga: number;
+    stok?: number | null;
     gambar?: string[];
     status?: StatusProduk;
   }
@@ -127,6 +137,7 @@ export async function createProdukWithFile(
     nama: string;
     deskripsi: string;
     harga: number;
+    stok?: number | null;
     status?: StatusProduk;
   },
   files?: File[]
@@ -139,10 +150,10 @@ export async function createProdukWithFile(
     if (v !== undefined && v !== null) form.append(k, String(v));
   });
   files.forEach((file, index) => {
-    form.append('gambar', file);
+    form.append("gambar", file);
   });
   const res = await fetch(`${API_URL}/produk`, {
-    method: 'POST',
+    method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
     } as any,
@@ -162,6 +173,7 @@ export async function updateProduk(
     nama: string;
     deskripsi: string;
     harga: number;
+    stok: number | null;
     gambar: string[];
     status: StatusProduk;
   }>
@@ -185,6 +197,7 @@ export async function updateProdukWithFile(
     nama: string;
     deskripsi: string;
     harga: number;
+    stok: number | null;
     status: StatusProduk;
     existingGambar?: string[];
   }>,
@@ -195,17 +208,17 @@ export async function updateProdukWithFile(
   }
   const form = new FormData();
   Object.entries(data).forEach(([k, v]) => {
-    if (k === 'existingGambar' && Array.isArray(v)) {
-      form.append('existingGambar', JSON.stringify(v));
+    if (k === "existingGambar" && Array.isArray(v)) {
+      form.append("existingGambar", JSON.stringify(v));
     } else if (v !== undefined && v !== null) {
       form.append(k, String(v));
     }
   });
   files.forEach((file, index) => {
-    form.append('gambar', file);
+    form.append("gambar", file);
   });
   const res = await fetch(`${API_URL}/produk/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
     } as any,
@@ -223,16 +236,26 @@ export async function deleteProduk(token: string, id: string): Promise<void> {
   if (!res.ok) throw new Error(await getErrorMessage(res));
 }
 
-export async function deleteProdukGambar(token: string, id: string, gambarUrl: string): Promise<void> {
-  const res = await fetch(`${API_URL}/produk/${id}/gambar/${encodeURIComponent(gambarUrl)}`, {
-    method: "DELETE",
-    headers: authHeaders(token),
-  });
+export async function deleteProdukGambar(
+  token: string,
+  id: string,
+  gambarUrl: string
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/produk/${id}/gambar/${encodeURIComponent(gambarUrl)}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    }
+  );
   if (!res.ok) throw new Error(await getErrorMessage(res));
 }
 
 // Produk Varian functions
-export async function listProdukVarian(token: string, produkId: string): Promise<ProdukVarianRecord[]> {
+export async function listProdukVarian(
+  token: string,
+  produkId: string
+): Promise<ProdukVarianRecord[]> {
   const res = await fetch(`${API_URL}/produk/${produkId}/varian`, {
     headers: authHeaders(token),
   });
@@ -240,7 +263,10 @@ export async function listProdukVarian(token: string, produkId: string): Promise
   return res.json();
 }
 
-export async function getProdukVarianById(token: string, varianId: string): Promise<ProdukVarianRecord> {
+export async function getProdukVarianById(
+  token: string,
+  varianId: string
+): Promise<ProdukVarianRecord> {
   const res = await fetch(`${API_URL}/produk/varian/${varianId}`, {
     headers: authHeaders(token),
   });
@@ -288,7 +314,10 @@ export async function updateProdukVarian(
   return res.json();
 }
 
-export async function deleteProdukVarian(token: string, varianId: string): Promise<void> {
+export async function deleteProdukVarian(
+  token: string,
+  varianId: string
+): Promise<void> {
   const res = await fetch(`${API_URL}/produk/varian/${varianId}`, {
     method: "DELETE",
     headers: authHeaders(token),

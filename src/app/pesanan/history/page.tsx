@@ -6,38 +6,9 @@ import {
   getPesananHistory,
   PesananRecord,
   StatusPesanan,
-  updatePesanan,
   cancelPesanan,
 } from "../../services/pesanan-updated";
 
-// ==== STYLES ====
-const containerStyle: React.CSSProperties = {
-  padding: 20,
-  maxWidth: 1200,
-  margin: "0 auto",
-  backgroundColor: "#f8f9fa",
-  minHeight: "100vh",
-};
-
-const cardStyle: React.CSSProperties = {
-  border: "2px solid #e1e8ed",
-  borderRadius: 12,
-  padding: 20,
-  backgroundColor: "#f8f9fa",
-  transition: "all 0.2s ease",
-  cursor: "pointer",
-};
-
-const itemStyle: React.CSSProperties = {
-  padding: "8px 12px",
-  backgroundColor: "#ecf0f1",
-  borderRadius: "6px",
-  fontSize: "12px",
-  color: "#2c3e50",
-  border: "1px solid #bdc3c7",
-};
-
-// ==== COMPONENT ====
 export default function PesananHistoryPage() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
@@ -55,7 +26,6 @@ export default function PesananHistoryPage() {
           return;
         }
         setToken(stored);
-
         const data = await getPesananHistory(stored);
         setPesanan(data);
       } catch (e: any) {
@@ -75,362 +45,346 @@ export default function PesananHistoryPage() {
   }
 
   function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
+    return new Date(dateString).toLocaleString("id-ID", {
+      day: "2-digit",
       month: "long",
-      day: "numeric",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   }
 
-  function getStatusColor(status: StatusPesanan): string {
-    switch (status) {
-      case StatusPesanan.PENDING:
-        return "#f39c12";
-      case StatusPesanan.DIPROSES:
-        return "#3498db";
-      case StatusPesanan.DIKIRIM:
-        return "#9b59b6";
-      case StatusPesanan.SELESAI:
-        return "#27ae60";
-      case StatusPesanan.DIBATALKAN:
-        return "#e74c3c";
-      default:
-        return "#95a5a6";
-    }
-  }
-
-  function getStatusText(status: StatusPesanan): string {
-    switch (status) {
-      case StatusPesanan.PENDING:
-        return "⏳ Menunggu Konfirmasi";
-      case StatusPesanan.DIPROSES:
-        return "🔧 Sedang Diproses";
-      case StatusPesanan.DIKIRIM:
-        return "🚚 Sedang Dikirim";
-      case StatusPesanan.SELESAI:
-        return "✅ Selesai";
-      case StatusPesanan.DIBATALKAN:
-        return "❌ Dibatalkan";
-      default:
-        return "❓ Status Tidak Diketahui";
-    }
-  }
-
-  if (loading) {
+  const getStatus = (status: StatusPesanan) => {
+    const statusMap = {
+      [StatusPesanan.PENDING]: {
+        text: "⏳ Menunggu Konfirmasi",
+        color: "#f1c40f",
+      },
+      [StatusPesanan.DIPROSES]: {
+        text: "🔧 Sedang Diproses",
+        color: "#3498db",
+      },
+      [StatusPesanan.DIKIRIM]: { text: "🚚 Sedang Dikirim", color: "#9b59b6" },
+      [StatusPesanan.SELESAI]: { text: "✅ Selesai", color: "#27ae60" },
+      [StatusPesanan.DIBATALKAN]: { text: "❌ Dibatalkan", color: "#e74c3c" },
+    };
     return (
-      <div style={{ padding: 20, textAlign: "center" }}>
-        <p>Memuat riwayat pesanan...</p>
-      </div>
+      statusMap[status] || { text: "❓ Tidak Diketahui", color: "#7f8c8d" }
     );
-  }
+  };
 
-  if (error) {
+  if (loading)
     return (
-      <div style={{ padding: 20 }}>
-        <p style={{ color: "red" }}>{error}</p>
-        <p>
-          <a href="/produk">Kembali ke Daftar Produk</a>
+      <div style={{ textAlign: "center", marginTop: 100 }}>
+        <p style={{ fontSize: 18, color: "#7f8c8d" }}>
+          Memuat riwayat pesanan...
         </p>
       </div>
     );
-  }
+
+  if (error)
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        <p style={{ color: "red", fontSize: 18 }}>{error}</p>
+        <a href="/produk" style={{ color: "#3498db", fontWeight: "bold" }}>
+          ← Kembali ke Daftar Produk
+        </a>
+      </div>
+    );
 
   return (
-    <div style={containerStyle}>
-      <div style={{ marginBottom: 20 }}>
-        <a
-          href="/produk"
-          style={{
-            textDecoration: "none",
-            color: "#3498db",
-            fontWeight: "bold",
-            fontSize: "16px",
-          }}
-        >
+    <div style={styles.container}>
+      <div style={{ marginBottom: 30 }}>
+        <a href="/produk" style={styles.backLink}>
           ← Kembali ke Daftar Produk
         </a>
       </div>
 
-      {/* Add Cancel Button for customer */}
-      {pesanan.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          {pesanan.map((order) => (
-            <div key={order.id} style={{ marginBottom: 10 }}>
-              {order.status !== StatusPesanan.DIBATALKAN &&
-                order.status !== StatusPesanan.SELESAI && (
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (
-                        confirm(
-                          "Apakah Anda yakin ingin membatalkan pesanan ini?"
-                        )
-                      ) {
-                        try {
-                          const token = localStorage.getItem("token");
-                          if (!token) {
-                            alert("Anda harus login terlebih dahulu");
-                            return;
-                          }
-                          await cancelPesanan(token, order.id);
-                          alert("Pesanan berhasil dibatalkan");
-                          window.location.reload();
-                        } catch (error: any) {
-                          alert(
-                            error?.message || "Gagal membatalkan pesanan"
-                          );
-                        }
-                      }
-                    }}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#e74c3c",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Batalkan Pesanan
-                  </button>
-                )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div style={styles.header}>
+        <h1 style={styles.title}>🛍️ Riwayat Pesanan Saya</h1>
+        <p style={styles.subtitle}>Total {pesanan.length} pesanan ditemukan</p>
+      </div>
 
-      <div
-        style={{
-          border: "2px solid #e1e8ed",
-          borderRadius: 16,
-          padding: 30,
-          backgroundColor: "white",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-        }}
-      >
-        {/* Header */}
-        <div style={{ marginBottom: 30, textAlign: "center" }}>
-          <h1
-            style={{
-              margin: 0,
-              color: "#2c3e50",
-              fontSize: "32px",
-              fontWeight: "bold",
-            }}
+      {pesanan.length === 0 ? (
+        <div style={styles.emptyState}>
+          <div style={{ fontSize: "60px", marginBottom: 10 }}>📦</div>
+          <h2 style={{ color: "#2c3e50" }}>Belum Ada Pesanan</h2>
+          <p style={{ color: "#7f8c8d" }}>Mulai berbelanja sekarang!</p>
+          <button
+            onClick={() => router.push("/produk")}
+            style={styles.primaryButton}
           >
-            🕘 Riwayat Pesanan Saya
-          </h1>
-          <p style={{ margin: "10px 0", color: "#7f8c8d", fontSize: "16px" }}>
-            Total {pesanan.length} pesanan ditemukan
-          </p>
+            Lihat Produk
+          </button>
         </div>
-
-        {pesanan.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "50px 20px" }}>
-            <div style={{ fontSize: "64px", marginBottom: "20px" }}>📦</div>
-            <h3
-              style={{
-                margin: "0 0 15px 0",
-                color: "#2c3e50",
-                fontSize: "24px",
-              }}
-            >
-              Belum Ada Pesanan
-            </h3>
-            <p
-              style={{
-                margin: "0 0 30px 0",
-                color: "#7f8c8d",
-                fontSize: "16px",
-              }}
-            >
-              Mulai berbelanja sekarang!
-            </p>
-            <button
-              onClick={() => router.push("/produk")}
-              style={{
-                padding: "12px 24px",
-                backgroundColor: "#3498db",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "16px",
-                fontWeight: "bold",
-              }}
-            >
-              Lihat Produk
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: "grid", gap: 20 }}>
-            {pesanan.map((order) => (
+      ) : (
+        <div style={styles.grid}>
+          {pesanan.map((order) => {
+            const status = getStatus(order.status);
+            return (
               <div
                 key={order.id}
-                style={cardStyle}
+                style={styles.card}
                 onClick={() => router.push(`/pesanan/${order.id}`)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#3498db";
-                  e.currentTarget.style.backgroundColor = "#ebf8ff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#e1e8ed";
-                  e.currentTarget.style.backgroundColor = "#f8f9fa";
-                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow =
+                    "0 4px 16px rgba(52,152,219,0.3)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.boxShadow =
+                    "0 2px 10px rgba(0,0,0,0.08)")
+                }
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    marginBottom: 15,
-                  }}
-                >
+                {/* HEADER */}
+                <div style={styles.cardHeader}>
                   <div>
-                    <h3
-                      style={{
-                        margin: "0 0 5px 0",
-                        fontSize: "18px",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      Pesanan #{order.id.slice(0, 8)}...
+                    <h3 style={styles.orderId}>
+                      Pesanan #{order.id.slice(0, 8)}
                     </h3>
-                    <p
-                      style={{
-                        margin: "0",
-                        fontSize: "14px",
-                        color: "#7f8c8d",
-                      }}
-                    >
+                    <p style={styles.date}>
                       {formatDate(order.tanggal_pesanan)}
                     </p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div
+                    <span
                       style={{
-                        fontSize: "14px",
-                        padding: "6px 12px",
-                        backgroundColor: getStatusColor(order.status),
-                        color: "white",
-                        borderRadius: "20px",
-                        fontWeight: "bold",
-                        marginBottom: "8px",
+                        ...styles.statusBadge,
+                        backgroundColor: status.color,
                       }}
                     >
-                      {getStatusText(order.status)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "bold",
-                        color: "#27ae60",
-                      }}
-                    >
+                      {status.text}
+                    </span>
+                    <div style={styles.totalPrice}>
                       {formatCurrency(order.total_harga)}
                     </div>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    padding: "15px",
-                    backgroundColor: "white",
-                    borderRadius: "8px",
-                    border: "1px solid #e1e8ed",
-                  }}
-                >
-                  <div style={{ marginBottom: "10px" }}>
-                    <strong style={{ color: "#2c3e50" }}>
-                      Alamat Pengiriman:
-                    </strong>
-                  </div>
-                  <p
-                    style={{
-                      margin: "0",
-                      fontSize: "14px",
-                      color: "#34495e",
-                      lineHeight: "1.4",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {order.alamat_pengiriman}
-                  </p>
+                {/* DETAIL ALAMAT */}
+                <div style={styles.section}>
+                  <p style={styles.sectionTitle}>📍 Alamat Pengiriman</p>
+                  <p style={styles.address}>{order.alamat_pengiriman}</p>
                 </div>
 
-                {order.pesanan_items && order.pesanan_items.length > 0 && (
-                  <div style={{ marginTop: 15 }}>
-                    <div style={{ marginBottom: "10px" }}>
-                      <strong style={{ color: "#2c3e50" }}>
-                        Item ({order.pesanan_items.length} produk):
-                      </strong>
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                      {order.pesanan_items.slice(0, 3).map((item, index) => (
-                        <div key={item.id} style={itemStyle}>
-                          {item.produk?.nama || `Produk ${index + 1}`} (
-                          {item.kuantitas})
-                        </div>
-                      ))}
-                      {order.pesanan_items.length > 3 && (
-                        <div
-                          style={{
-                            padding: "8px 12px",
-                            backgroundColor: "#f39c12",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            color: "white",
-                            border: "1px solid #e67e22",
-                          }}
-                        >
-                          +{order.pesanan_items.length - 3} lainnya
+                {/* ITEM PRODUK */}
+                {(order.pesanan_items?.length ?? 0) > 0 && (
+                  <div style={styles.section}>
+                    <p style={styles.sectionTitle}>
+                      🛒 Produk ({order.pesanan_items?.length ?? 0})
+                    </p>
+                    <div style={styles.itemList}>
+                      {(order.pesanan_items ?? [])
+                        .slice(0, 3)
+                        .map((item, i) => (
+                          <div key={item.id} style={styles.item}>
+                            {item.produk?.nama || `Produk ${i + 1}`} (
+                            {item.kuantitas})
+                          </div>
+                        ))}
+                      {(order.pesanan_items?.length ?? 0) > 3 && (
+                        <div style={styles.moreBadge}>
+                          +{(order.pesanan_items?.length ?? 0) - 3} lainnya
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    marginTop: 15,
-                    paddingTop: 15,
-                    borderTop: "1px solid #e1e8ed",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div style={{ fontSize: "12px", color: "#7f8c8d" }}>
+                {/* FOOTER */}
+                <div style={styles.footer}>
+                  <span style={styles.footerDate}>
                     Dibuat: {formatDate(order.created_at)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#3498db",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Klik untuk detail →
+                  </span>
+                  <div style={styles.footerActions}>
+                    {order.status !== StatusPesanan.SELESAI &&
+                      order.status !== StatusPesanan.DIBATALKAN && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (
+                              confirm("Yakin ingin membatalkan pesanan ini?")
+                            ) {
+                              try {
+                                const token = localStorage.getItem("token");
+                                if (!token) return alert("Login dulu");
+                                await cancelPesanan(token, order.id);
+                                alert("Pesanan dibatalkan");
+                                window.location.reload();
+                              } catch (error: any) {
+                                alert("Gagal membatalkan pesanan");
+                              }
+                            }
+                          }}
+                          style={styles.cancelButton}
+                        >
+                          Batalkan
+                        </button>
+                      )}
+                    <span style={styles.detailLink}>Lihat Detail →</span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
+// === STYLES ===
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    padding: "40px 20px",
+    backgroundColor: "#f6f8fa",
+    minHeight: "100vh",
+  },
+  backLink: {
+    textDecoration: "none",
+    color: "#3498db",
+    fontWeight: "bold",
+    fontSize: "16px",
+  },
+  header: { textAlign: "center", marginBottom: 40 },
+  title: {
+    fontSize: "32px",
+    fontWeight: "bold",
+    color: "#2c3e50",
+    margin: 0,
+  },
+  subtitle: {
+    color: "#7f8c8d",
+    fontSize: "16px",
+    marginTop: 10,
+  },
+  grid: {
+    display: "grid",
+    gap: 20,
+    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    transition: "box-shadow 0.2s ease",
+    cursor: "pointer",
+  },
+  cardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  orderId: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "#2c3e50",
+  },
+  date: { color: "#7f8c8d", fontSize: "14px" },
+  statusBadge: {
+    display: "inline-block",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  totalPrice: {
+    fontWeight: "bold",
+    color: "#27ae60",
+    fontSize: "18px",
+  },
+  section: { marginTop: 10 },
+  sectionTitle: {
+    fontWeight: "bold",
+    fontSize: "14px",
+    color: "#2c3e50",
+    marginBottom: 5,
+  },
+  address: {
+    backgroundColor: "#ecf0f1",
+    borderRadius: 6,
+    padding: 10,
+    fontSize: "13px",
+    color: "#34495e",
+  },
+  itemList: { display: "flex", flexWrap: "wrap", gap: 8 },
+  item: {
+    backgroundColor: "#ecf0f1",
+    borderRadius: 6,
+    padding: "6px 10px",
+    fontSize: "12px",
+    color: "#2c3e50",
+    border: "1px solid #d0d7de",
+  },
+  moreBadge: {
+    backgroundColor: "#f39c12",
+    color: "white",
+    borderRadius: 6,
+    padding: "6px 10px",
+    fontSize: "12px",
+    fontWeight: "bold",
+  },
+  footer: {
+    marginTop: 15,
+    paddingTop: 10,
+    borderTop: "1px solid #e1e8ed",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 
+  footerDate: {
+    fontSize: "12px",
+    color: "#7f8c8d",
+  },
 
+  footerActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
 
+  cancelButton: {
+    backgroundColor: "#e74c3c",
+    color: "white",
+    border: "none",
+    borderRadius: 4,
+    padding: "5px 10px",
+    fontSize: "12px",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "background-color 0.2s ease",
+  },
+  cancelButtonHover: {
+    backgroundColor: "#c0392b",
+  },
 
-
+  detailLink: {
+    color: "#3498db",
+    fontWeight: 600,
+    fontSize: "13px",
+    cursor: "pointer",
+    transition: "color 0.2s ease",
+  },
+  emptyState: {
+    textAlign: "center",
+    padding: 60,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+  },
+  primaryButton: {
+    backgroundColor: "#3498db",
+    color: "white",
+    border: "none",
+    borderRadius: 8,
+    padding: "12px 24px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    marginTop: 15,
+  },
+};

@@ -46,6 +46,7 @@ export default function ProdukPage() {
   const [nama, setNama] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [harga, setHarga] = useState("");
+  const [stok, setStok] = useState("");
   const [gambar, setGambar] = useState<File[]>([]);
   const [gambarPreview, setGambarPreview] = useState<string[]>([]);
   const [status, setStatus] = useState<StatusProduk>(StatusProduk.AKTIF);
@@ -58,6 +59,7 @@ export default function ProdukPage() {
   const [editNama, setEditNama] = useState("");
   const [editDeskripsi, setEditDeskripsi] = useState("");
   const [editHarga, setEditHarga] = useState("");
+  const [editStok, setEditStok] = useState("");
   const [editGambar, setEditGambar] = useState<string[]>([]);
   const [editOriginalGambar, setEditOriginalGambar] = useState<string[]>([]);
   const [editGambarFile, setEditGambarFile] = useState<File[]>([]);
@@ -182,34 +184,33 @@ export default function ProdukPage() {
       !brand_id ||
       !nama ||
       !deskripsi ||
-      !harga
+      !harga ||
+      !stok
     ) {
       return alert("Semua field wajib diisi kecuali gambar");
     }
     try {
+      // Prepare data, only include stok if provided
+      let createData: any = {
+        subkategori_id,
+        brand_id,
+        nama,
+        deskripsi,
+        harga: parseFloat(harga),
+        status,
+      };
+      if (stok) createData.stok = parseInt(stok);
+      if (kategori_id) createData.kategori_id = kategori_id;
+
       // Gunakan multipart bila ada file, hindari blob URL
       if (gambar.length > 0) {
         await createProdukWithFile(
           token,
-          {
-            subkategori_id,
-            brand_id,
-            nama,
-            deskripsi,
-            harga: parseFloat(harga),
-            status,
-          },
+          createData,
           gambar // ini array of File[], cocok dengan FilesInterceptor
         );
       } else {
-        await createProduk(token, {
-          subkategori_id,
-          brand_id,
-          nama,
-          deskripsi,
-          harga: parseFloat(harga),
-          status,
-        });
+        await createProduk(token, createData);
       }
 
       // Reset form
@@ -233,7 +234,9 @@ export default function ProdukPage() {
     if (!canManage) return alert("Fitur ini hanya untuk petugas/admin");
     try {
       // 1. Hapus gambar yang sudah dihapus user dari UI
-      const deletedImages = editOriginalGambar.filter(img => !editGambar.includes(img));
+      const deletedImages = editOriginalGambar.filter(
+        (img) => !editGambar.includes(img)
+      );
       for (const img of deletedImages) {
         try {
           // Defensive: check if img is a valid string and not empty
@@ -243,7 +246,7 @@ export default function ProdukPage() {
             console.warn("Skipping invalid image URL for deletion:", img);
           }
         } catch (deleteError) {
-          console.error('Error deleting image:', deleteError);
+          console.error("Error deleting image:", deleteError);
           // Continue with other deletions even if one fails
         }
       }
@@ -256,6 +259,7 @@ export default function ProdukPage() {
       if (editNama) updateData.nama = editNama;
       if (editDeskripsi) updateData.deskripsi = editDeskripsi;
       if (editHarga) updateData.harga = parseFloat(editHarga);
+      if (editStok !== "") updateData.stok = parseInt(editStok);
       if (editStatus) updateData.status = editStatus;
 
       // Handle gambar updates
@@ -263,7 +267,12 @@ export default function ProdukPage() {
         // Use multipart upload for new files, backend will replace images with existing + new
         // So we need to send existing images explicitly as array
         updateData.existingGambar = editGambar;
-        const updatedProduct = await updateProdukWithFile(token, id, updateData, editGambarFile);
+        const updatedProduct = await updateProdukWithFile(
+          token,
+          id,
+          updateData,
+          editGambarFile
+        );
       } else {
         // No new files, update with remaining existing images
         updateData.gambar = editGambar;
@@ -407,7 +416,7 @@ export default function ProdukPage() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
+      reader.onerror = (error) => reject(error);
     });
   }
 
@@ -641,6 +650,19 @@ export default function ProdukPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Stok *
+                  </label>
+                  <input
+                    placeholder="Masukkan stok"
+                    type="number"
+                    value={stok}
+                    onChange={(e) => setStok(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!canManage}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Status
                   </label>
                   <select
@@ -835,6 +857,18 @@ export default function ProdukPage() {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Stok
+                            </label>
+                            <input
+                              placeholder="Masukkan stok"
+                              type="number"
+                              value={editStok}
+                              onChange={(e) => setEditStok(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                               Status
                             </label>
                             <select
@@ -1003,6 +1037,16 @@ export default function ProdukPage() {
                           <div className="flex flex-col items-end gap-2">
                             <div className="text-lg font-semibold text-green-600">
                               {formatCurrency(produk.harga)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              Stok:{" "}
+                              {produk.stok ||
+                                (produk.varian
+                                  ? produk.varian.reduce(
+                                      (sum, v) => sum + v.stok,
+                                      0
+                                    )
+                                  : 0)}
                             </div>
                             <div
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1370,6 +1414,9 @@ export default function ProdukPage() {
                                   setEditNama(produk.nama);
                                   setEditDeskripsi(produk.deskripsi);
                                   setEditHarga(produk.harga.toString());
+                                  setEditStok(
+                                    produk.stok ? produk.stok.toString() : ""
+                                  );
                                   setEditGambar(produk.gambar || []);
                                   setEditOriginalGambar(produk.gambar || []);
                                   setEditStatus(produk.status);

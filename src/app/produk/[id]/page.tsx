@@ -2,12 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getProdukById, ProdukRecord, StatusProduk, listProdukVarian, ProdukVarianRecord } from "../../services/produk";
+import {
+  getProdukById,
+  ProdukRecord,
+  StatusProduk,
+  listProdukVarian,
+  ProdukVarianRecord,
+} from "../../services/produk";
 import { useCart } from "../../contexts/CartContext";
 import { addKeranjangItem } from "../../services/keranjang";
 import { API_URL, getProfile } from "../../services/auth";
 import StarRating from "../../components/StarRating";
-import { getAverageRating, createRating, updateRating, getRatingsByProduct } from "../../services/rating";
+import {
+  getAverageRating,
+  createRating,
+  updateRating,
+  getRatingsByProduct,
+} from "../../services/rating";
 
 export default function ProdukDetailPage() {
   const params = useParams();
@@ -16,7 +27,8 @@ export default function ProdukDetailPage() {
   const [token, setToken] = useState<string | null>(null);
   const [produk, setProduk] = useState<ProdukRecord | null>(null);
   const [varian, setVarian] = useState<ProdukVarianRecord[]>([]);
-  const [selectedVarian, setSelectedVarian] = useState<ProdukVarianRecord | null>(null);
+  const [selectedVarian, setSelectedVarian] =
+    useState<ProdukVarianRecord | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
@@ -56,7 +68,7 @@ export default function ProdukDetailPage() {
           const varianData = await listProdukVarian(stored, id);
           setVarian(varianData);
         } catch (e) {
-          console.log('No variants available for this product');
+          console.log("No variants available for this product");
         }
 
         // Load ratings and user rating
@@ -69,7 +81,9 @@ export default function ProdukDetailPage() {
 
           const ratings = await getRatingsByProduct(id);
           setRatingCount(ratings.length);
-          const userRatingObj = ratings.find((r: any) => r.user.id === profileRes.user.id);
+          const userRatingObj = ratings.find(
+            (r: any) => r.user.id === profileRes.user.id
+          );
           if (userRatingObj) {
             setUserRating(userRatingObj.rating);
             setUserRatingId(userRatingObj.id);
@@ -87,33 +101,33 @@ export default function ProdukDetailPage() {
   }, [params.id]);
 
   function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR'
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
     }).format(amount);
   }
 
   function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
   function resolveImageUrl(src?: string): string | undefined {
     if (!src) return undefined;
-    if (src.startsWith('http://') || src.startsWith('https://')) return src;
-    if (src.startsWith('/')) return `${API_URL}${src}`;
+    if (src.startsWith("http://") || src.startsWith("https://")) return src;
+    if (src.startsWith("/")) return `${API_URL}${src}`;
     return `${API_URL}/${src}`;
   }
 
   const handleAddToCart = async () => {
     if (!produk) return;
     if (varian.length > 0 && !selectedVarian) {
-      alert('Silakan pilih varian terlebih dahulu.');
+      alert("Silakan pilih varian terlebih dahulu.");
       return;
     }
     if (selectedVarian?.stok !== undefined && quantity > selectedVarian.stok) {
@@ -128,22 +142,25 @@ export default function ProdukDetailPage() {
           produk_varian_id: selectedVarian?.id,
           kuantitas: quantity,
         });
-        alert('Produk ditambahkan ke keranjang (server).');
+        alert("Produk ditambahkan ke keranjang (server).");
       } else {
         addItem(produk, quantity, selectedVarian || undefined);
-        alert('Produk ditambahkan ke keranjang (lokal).');
+        alert("Produk ditambahkan ke keranjang (lokal).");
       }
     } catch (e: any) {
       // Fallback to local cart on API error
       addItem(produk, quantity, selectedVarian || undefined);
-      alert(e?.message || 'Gagal menambah ke keranjang server. Disimpan di keranjang lokal.');
+      alert(
+        e?.message ||
+          "Gagal menambah ke keranjang server. Disimpan di keranjang lokal."
+      );
     }
   };
 
   const handleBuyNow = () => {
     if (!produk) return;
     if (varian.length > 0 && !selectedVarian) {
-      alert('Silakan pilih varian terlebih dahulu.');
+      alert("Silakan pilih varian terlebih dahulu.");
       return;
     }
     if (selectedVarian?.stok !== undefined && quantity > selectedVarian.stok) {
@@ -174,10 +191,10 @@ export default function ProdukDetailPage() {
     };
 
     try {
-      localStorage.setItem('checkoutDraft', JSON.stringify(draft));
+      localStorage.setItem("checkoutDraft", JSON.stringify(draft));
     } catch {}
 
-    router.push('/checkout');
+    router.push("/checkout");
   };
 
   const getCurrentPrice = () => {
@@ -188,17 +205,32 @@ export default function ProdukDetailPage() {
   };
 
   // Extract unique sizes and colors from variants
-  const uniqueSizes = Array.from(new Set(varian.map(v => v.ukuran).filter(Boolean)));
-  const uniqueColors = Array.from(new Set(varian.map(v => v.warna).filter(Boolean)));
+  const uniqueSizes = Array.from(
+    new Set(varian.map((v) => v.ukuran).filter(Boolean))
+  );
+  const uniqueColors = Array.from(
+    new Set(varian.map((v) => v.warna).filter(Boolean))
+  );
 
   // Find matching variant based on selected size and color
-  const findMatchingVariant = (size: string, color: string): ProdukVarianRecord | null => {
+  const findMatchingVariant = (
+    size: string,
+    color: string
+  ): ProdukVarianRecord | null => {
     if (size && color) {
-      return varian.find(v => v.ukuran === size && v.warna === color) || null;
+      return varian.find((v) => v.ukuran === size && v.warna === color) || null;
     } else if (size) {
-      return varian.find(v => v.ukuran === size && (!v.warna || v.warna === null)) || null;
+      return (
+        varian.find(
+          (v) => v.ukuran === size && (!v.warna || v.warna === null)
+        ) || null
+      );
     } else if (color) {
-      return varian.find(v => v.warna === color && (!v.ukuran || v.ukuran === null)) || null;
+      return (
+        varian.find(
+          (v) => v.warna === color && (!v.ukuran || v.ukuran === null)
+        ) || null
+      );
     }
     return null;
   };
@@ -266,15 +298,17 @@ export default function ProdukDetailPage() {
         <div className="p-6 md:p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{produk.nama}</h1>
-            <p className="text-gray-500 font-mono">
-              ID: {produk.id}
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {produk.nama}
+            </h1>
+            <p className="text-gray-500 font-mono">ID: {produk.id}</p>
           </div>
 
           {/* Rating Section */}
           <div className="mb-8 p-6 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">⭐ Rating Produk</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              ⭐ Rating Produk
+            </h3>
             <div className="flex items-center gap-4 mb-4">
               <div className="text-2xl font-bold text-yellow-600">
                 {averageRating.toFixed(1)} ⭐
@@ -294,10 +328,19 @@ export default function ProdukDetailPage() {
                     try {
                       if (userRatingId) {
                         // Update existing rating
-                        await updateRating(userRatingId, newRating, token || "");
+                        await updateRating(
+                          userRatingId,
+                          newRating,
+                          token || ""
+                        );
                       } else {
                         // Create new rating
-                        await createRating(profile.id, produk.id, newRating, token || "");
+                        await createRating(
+                          profile.id,
+                          produk.id,
+                          newRating,
+                          token || ""
+                        );
                       }
                       // Refresh ratings
                       const avgRes = await getAverageRating(produk.id);
@@ -306,15 +349,17 @@ export default function ProdukDetailPage() {
                       setRatingCount(ratings.length);
                       setUserRating(newRating);
                       if (!userRatingId) {
-                        const userRatingObj = ratings.find((r: any) => r.user.id === profile.id);
+                        const userRatingObj = ratings.find(
+                          (r: any) => r.user.id === profile.id
+                        );
                         if (userRatingObj) {
                           setUserRatingId(userRatingObj.id);
                         }
                       }
-                      alert('Rating berhasil disimpan!');
+                      alert("Rating berhasil disimpan!");
                     } catch (e) {
-                      console.error('Failed to save rating', e);
-                      alert('Gagal menyimpan rating');
+                      console.error("Failed to save rating", e);
+                      alert("Gagal menyimpan rating");
                     }
                   }}
                   readonly={false}
@@ -322,9 +367,7 @@ export default function ProdukDetailPage() {
               </div>
             )}
             {!profile && (
-              <div className="text-gray-600">
-                Login untuk memberikan rating
-              </div>
+              <div className="text-gray-600">Login untuk memberikan rating</div>
             )}
           </div>
 
@@ -364,26 +407,37 @@ export default function ProdukDetailPage() {
                   <div className="text-gray-600 font-medium">
                     Harga per unit
                   </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Stok:{" "}
+                    {produk.stok ||
+                      (varian.length > 0
+                        ? varian.reduce((sum, v) => sum + v.stok, 0)
+                        : 0)}
+                  </div>
                 </div>
-                <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                  produk.status === StatusProduk.AKTIF
-                    ? 'bg-green-100 text-green-800'
-                    : produk.status === StatusProduk.NONAKTIF
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                }`}>
+                <div
+                  className={`px-4 py-2 rounded-full text-sm font-medium ${
+                    produk.status === StatusProduk.AKTIF
+                      ? "bg-green-100 text-green-800"
+                      : produk.status === StatusProduk.NONAKTIF
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
                   {produk.status === StatusProduk.AKTIF
-                    ? '✅ Aktif'
+                    ? "✅ Aktif"
                     : produk.status === StatusProduk.NONAKTIF
-                      ? '❌ Nonaktif'
-                      : '⚠️ Stok Habis'}
+                    ? "❌ Nonaktif"
+                    : "⚠️ Stok Habis"}
                 </div>
               </div>
 
               {/* Product Variants */}
               {varian.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">🎨 Varian Produk</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    🎨 Varian Produk
+                  </h3>
 
                   {/* Size and Color Selection */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -434,12 +488,16 @@ export default function ProdukDetailPage() {
                   {selectedVarian && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="font-medium text-blue-900 mb-2">
-                        Varian Terpilih: {selectedVarian.ukuran && `Ukuran ${selectedVarian.ukuran}`}
-                        {selectedVarian.ukuran && selectedVarian.warna && ' | '}
-                        {selectedVarian.warna && `Warna ${selectedVarian.warna}`}
+                        Varian Terpilih:{" "}
+                        {selectedVarian.ukuran &&
+                          `Ukuran ${selectedVarian.ukuran}`}
+                        {selectedVarian.ukuran && selectedVarian.warna && " | "}
+                        {selectedVarian.warna &&
+                          `Warna ${selectedVarian.warna}`}
                       </div>
                       <div className="text-blue-700 font-semibold">
-                        Harga: {formatCurrency(selectedVarian.harga || produk.harga)}
+                        Harga:{" "}
+                        {formatCurrency(selectedVarian.harga || produk.harga)}
                       </div>
                       <div className="text-blue-600 text-sm">
                         Stok tersedia: {selectedVarian.stok}
@@ -460,7 +518,9 @@ export default function ProdukDetailPage() {
 
               {/* Add to Cart Section */}
               <div className="mb-8 p-6 bg-gray-50 rounded-lg">
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">🛒 Beli Produk</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                  🛒 Beli Produk
+                </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
@@ -478,11 +538,14 @@ export default function ProdukDetailPage() {
                         {quantity}
                       </span>
                       <button
-                        onClick={() => setQuantity(() => {
-                          const max = selectedVarian?.stok ?? Number.POSITIVE_INFINITY;
-                          const next = quantity + 1;
-                          return next > max ? quantity : next;
-                        })}
+                        onClick={() =>
+                          setQuantity(() => {
+                            const max =
+                              selectedVarian?.stok ?? Number.POSITIVE_INFINITY;
+                            const next = quantity + 1;
+                            return next > max ? quantity : next;
+                          })
+                        }
                         className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center text-lg font-bold hover:bg-blue-700 transition-colors"
                       >
                         +
@@ -511,11 +574,13 @@ export default function ProdukDetailPage() {
                     disabled={produk.status !== StatusProduk.AKTIF}
                     className={`w-full py-3 px-4 rounded-lg text-base font-medium transition-colors ${
                       produk.status === StatusProduk.AKTIF
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}
                   >
-                    {produk.status === StatusProduk.AKTIF ? '🛒 Tambah ke Keranjang' : '❌ Produk Tidak Tersedia'}
+                    {produk.status === StatusProduk.AKTIF
+                      ? "🛒 Tambah ke Keranjang"
+                      : "❌ Produk Tidak Tersedia"}
                   </button>
 
                   {produk.status === StatusProduk.AKTIF && (
@@ -533,7 +598,9 @@ export default function ProdukDetailPage() {
 
           {/* Description */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">📝 Deskripsi</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              📝 Deskripsi
+            </h3>
             <p className="text-gray-700 bg-gray-50 p-6 rounded-lg border border-gray-200">
               {produk.deskripsi}
             </p>
@@ -541,10 +608,14 @@ export default function ProdukDetailPage() {
 
           {/* Categories */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">🏷️ Kategori</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              🏷️ Kategori
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-sm text-gray-600 mb-2 font-medium">Subkategori ID</div>
+                <div className="text-sm text-gray-600 mb-2 font-medium">
+                  Subkategori ID
+                </div>
                 <div className="text-base font-bold text-blue-700 font-mono mb-2">
                   {produk.subkategori_id}
                 </div>
@@ -555,7 +626,9 @@ export default function ProdukDetailPage() {
                 )}
               </div>
               <div className="p-6 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="text-sm text-gray-600 mb-2 font-medium">Brand ID</div>
+                <div className="text-sm text-gray-600 mb-2 font-medium">
+                  Brand ID
+                </div>
                 <div className="text-base font-bold text-purple-700 font-mono mb-2">
                   {produk.brand_id}
                 </div>
@@ -570,16 +643,22 @@ export default function ProdukDetailPage() {
 
           {/* Timestamps */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">⚙️ Informasi Sistem</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              ⚙️ Informasi Sistem
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="text-gray-500 mb-1 font-medium">📅 Dibuat pada</div>
+                <div className="text-gray-500 mb-1 font-medium">
+                  📅 Dibuat pada
+                </div>
                 <div className="text-gray-900 font-medium">
                   {formatDate(produk.created_at)}
                 </div>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="text-gray-500 mb-1 font-medium">🔄 Terakhir diperbarui</div>
+                <div className="text-gray-500 mb-1 font-medium">
+                  🔄 Terakhir diperbarui
+                </div>
                 <div className="text-gray-900 font-medium">
                   {formatDate(produk.updated_at)}
                 </div>
@@ -587,7 +666,9 @@ export default function ProdukDetailPage() {
             </div>
             {produk.deleted_at && (
               <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                <div className="text-red-600 mb-1 font-medium">🗑️ Dihapus pada</div>
+                <div className="text-red-600 mb-1 font-medium">
+                  🗑️ Dihapus pada
+                </div>
                 <div className="text-red-700 font-medium">
                   {formatDate(produk.deleted_at)}
                 </div>

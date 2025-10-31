@@ -330,9 +330,3 @@ export default function PesananListPage() {
     </div>
   );
 }
-
-
-
-
-
-
