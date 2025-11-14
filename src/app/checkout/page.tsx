@@ -80,7 +80,7 @@ export default function CheckoutPage() {
         // Load Midtrans Snap script
         if (!snapScriptLoaded.current) {
           const script = document.createElement("script");
-          script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+          script.src = "https://app.sandbox.midtrans.com/snap/snap.js"; // biarkan ini
           script.setAttribute(
             "data-client-key",
             process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
@@ -222,48 +222,20 @@ export default function CheckoutPage() {
         );
         console.log("Midtrans snap object:", window.snap);
         console.log("Midtrans token:", midtransData.token);
-        if (window.snap && midtransData.token) {
-          try {
-            window.snap.pay(midtransData.token, {
-              enabledPayments: enabledPayments,
-              onSuccess: function (result: any) {
-                setPaymentLoading(false);
-                setSuccess(`Pembayaran berhasil! Order ID: ${result.order_id}`);
-                setTimeout(() => {
-                  router.push(`/pesanan/${order.id}`);
-                }, 2000);
-              },
-              onPending: function (result: any) {
-                setPaymentLoading(false);
-                setSuccess(
-                  `Pembayaran sedang diproses. Order ID: ${result.order_id}`
-                );
-                setTimeout(() => {
-                  router.push(`/pesanan/${order.id}`);
-                }, 2000);
-              },
-              onError: function (result: any) {
-                setPaymentLoading(false);
-                setError(
-                  `Pembayaran gagal: ${
-                    result.status_message || "Terjadi kesalahan"
-                  }`
-                );
-              },
-              onClose: function () {
-                setPaymentLoading(false);
-                if (!success) {
-                  setError("Pembayaran dibatalkan oleh pengguna.");
-                }
-              },
-            });
-          } catch (err) {
-            console.error("Error calling snap.pay:", err);
+        if (midtransData.redirect_url) {
+          const snapContainer = document.getElementById("snap-container");
+          if (snapContainer) {
+            snapContainer.innerHTML = `
+      <iframe src="${midtransData.redirect_url}"
+        width="100%" height="700" frameborder="0"
+        style="border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      </iframe>
+    `;
             setPaymentLoading(false);
-            setError("Terjadi kesalahan saat memproses pembayaran Midtrans.");
+            setSuccess("Silakan selesaikan pembayaran di bawah ini 👇");
+          } else {
+            window.location.href = midtransData.redirect_url;
           }
-        } else if (midtransData.redirect_url) {
-          window.location.href = midtransData.redirect_url;
         } else {
           // Fallback to order detail if no redirect URL
           setPaymentLoading(false);

@@ -1,5 +1,6 @@
 // Gunakan env agar mudah menyesuaikan base URL backend (sertakan prefix jika ada, mis. http://localhost:3000/api)
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"; // sesuaikan dengan port/prefix NestJS
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"; // sesuaikan dengan port/prefix NestJS
 
 // Register user
 export async function registerUser(
@@ -40,26 +41,27 @@ export async function getProfile(token: string) {
 export async function isAdmin(token: string): Promise<boolean> {
   try {
     const profile = await getProfile(token);
-    console.log('User profile:', profile); // Debug log
+    console.log("User profile:", profile); // Debug log
     // Fix: role is nested inside profile.user.role
-    console.log('User role:', profile.user?.role); // Debug log
-    const isAdminUser = profile.user?.role?.name === 'admin' || profile.user?.role === 'admin';
-    console.log('Is admin:', isAdminUser); // Debug log
+    console.log("User role:", profile.user?.role); // Debug log
+    const isAdminUser =
+      profile.user?.role?.name === "admin" || profile.user?.role === "admin";
+    console.log("Is admin:", isAdminUser); // Debug log
 
     // Also check JWT token payload directly as backup
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT payload role:', payload.role);
-      if (payload.role === 'admin') {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      console.log("JWT payload role:", payload.role);
+      if (payload.role === "admin") {
         return true;
       }
     } catch (jwtError) {
-      console.error('Error parsing JWT:', jwtError);
+      console.error("Error parsing JWT:", jwtError);
     }
 
     return isAdminUser;
   } catch (error) {
-    console.error('Error checking admin status:', error);
+    console.error("Error checking admin status:", error);
     return false;
   }
 }
@@ -68,25 +70,27 @@ export async function isAdmin(token: string): Promise<boolean> {
 export async function isPetugas(token: string): Promise<boolean> {
   try {
     const profile = await getProfile(token);
-    console.log('User profile:', profile); // Debug log
-    console.log('User role:', profile.user?.role); // Debug log
-    const isPetugasUser = profile.user?.role?.name === 'petugas' || profile.user?.role === 'petugas';
-    console.log('Is petugas:', isPetugasUser); // Debug log
+    console.log("User profile:", profile); // Debug log
+    console.log("User role:", profile.user?.role); // Debug log
+    const isPetugasUser =
+      profile.user?.role?.name === "petugas" ||
+      profile.user?.role === "petugas";
+    console.log("Is petugas:", isPetugasUser); // Debug log
 
     // Also check JWT token payload directly as backup
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT payload role:', payload.role);
-      if (payload.role === 'petugas') {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      console.log("JWT payload role:", payload.role);
+      if (payload.role === "petugas") {
         return true;
       }
     } catch (jwtError) {
-      console.error('Error parsing JWT:', jwtError);
+      console.error("Error parsing JWT:", jwtError);
     }
 
     return isPetugasUser;
   } catch (error) {
-    console.error('Error checking petugas status:', error);
+    console.error("Error checking petugas status:", error);
     return false;
   }
 }
@@ -95,25 +99,27 @@ export async function isPetugas(token: string): Promise<boolean> {
 export async function isCustomer(token: string): Promise<boolean> {
   try {
     const profile = await getProfile(token);
-    console.log('User profile:', profile); // Debug log
-    console.log('User role:', profile.user?.role); // Debug log
-    const isCustomerUser = profile.user?.role?.name === 'customer' || profile.user?.role === 'customer';
-    console.log('Is customer:', isCustomerUser); // Debug log
+    console.log("User profile:", profile); // Debug log
+    console.log("User role:", profile.user?.role); // Debug log
+    const isCustomerUser =
+      profile.user?.role?.name === "customer" ||
+      profile.user?.role === "customer";
+    console.log("Is customer:", isCustomerUser); // Debug log
 
     // Also check JWT token payload directly as backup
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT payload role:', payload.role);
-      if (payload.role === 'customer') {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      console.log("JWT payload role:", payload.role);
+      if (payload.role === "customer") {
         return true;
       }
     } catch (jwtError) {
-      console.error('Error parsing JWT:', jwtError);
+      console.error("Error parsing JWT:", jwtError);
     }
 
     return isCustomerUser;
   } catch (error) {
-    console.error('Error checking customer status:', error);
+    console.error("Error checking customer status:", error);
     return false;
   }
 }
@@ -150,11 +156,60 @@ export async function verifyOtp(email: string, otp: string) {
 }
 
 // Reset Password
-export async function resetPassword(email: string, otp: string, newPassword: string) {
+export async function resetPassword(
+  email: string,
+  otp: string,
+  newPassword: string
+) {
   const res = await fetch(`${API_URL}/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, otp, newPassword }),
   });
   return res.json();
+}
+
+// Update Customer Profile
+export async function updateCustomerProfile(
+  token: string,
+  id: string,
+  data: { username?: string; email?: string; phone?: string }
+) {
+  const resp = await fetch(`${API_URL}/users/profile/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  // Try to parse JSON body (backend may return different shapes)
+  let payload: any = null;
+  try {
+    payload = await resp.json();
+  } catch (e) {
+    // no JSON body
+    payload = null;
+  }
+
+  // Normalize response to { success: boolean, data?, message? }
+  if (resp.ok) {
+    // If backend already returns { success: true } keep it, or detect { user } shape
+    if (payload && typeof payload === "object") {
+      return {
+        success: payload.success ?? true,
+        data: payload.user ?? payload.data ?? payload,
+        message: payload.message,
+      };
+    }
+
+    return { success: true, data: payload };
+  } else {
+    return {
+      success: false,
+      message: payload?.message || resp.statusText || "Request failed",
+      data: payload,
+    };
+  }
 }

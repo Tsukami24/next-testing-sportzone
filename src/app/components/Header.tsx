@@ -97,6 +97,12 @@ export default function Header() {
                 {mobileMenuOpen && (
                   <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50">
                     <a
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-[#5b0675ff] hover:bg-gray-100 transition"
+                    >
+                      My Profile
+                    </a>
+                    <a
                       href="/pesanan/history"
                       className="block px-4 py-2 text-sm text-[#5b0675ff] hover:bg-gray-100 transition"
                     >
@@ -180,6 +186,12 @@ export default function Header() {
 
             {token ? (
               <>
+                <a
+                  href="/profile"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:opacity-80 transition-opacity"
+                >
+                  My Profile
+                </a>
                 <a
                   href="/pesanan/history"
                   className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:opacity-80 transition-opacity"

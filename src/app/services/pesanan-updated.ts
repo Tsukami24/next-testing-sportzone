@@ -6,7 +6,8 @@ export enum StatusPesanan {
   DIPROSES = "diproses",
   DIKIRIM = "dikirim",
   SELESAI = "selesai",
-  DIBATALKAN = "dibatalkan"
+  DIBATALKAN = "dibatalkan",
+  DIKEMBALIKAN = "dikembalikan",
 }
 
 // Interface for Pesanan entity
@@ -95,7 +96,10 @@ async function getErrorMessage(res: Response) {
 }
 
 // Pesanan functions
-export async function createPesanan(token: string, data: CreatePesananDto): Promise<PesananRecord> {
+export async function createPesanan(
+  token: string,
+  data: CreatePesananDto
+): Promise<PesananRecord> {
   const res = await fetch(`${API_URL}/pesanan`, {
     method: "POST",
     headers: authHeaders(token),
@@ -113,7 +117,9 @@ export async function getAllPesanan(token: string): Promise<PesananRecord[]> {
   return res.json();
 }
 
-export async function getPesananHistory(token: string): Promise<PesananRecord[]> {
+export async function getPesananHistory(
+  token: string
+): Promise<PesananRecord[]> {
   const res = await fetch(`${API_URL}/pesanan/history`, {
     headers: authHeaders(token),
   });
@@ -121,7 +127,10 @@ export async function getPesananHistory(token: string): Promise<PesananRecord[]>
   return res.json();
 }
 
-export async function getPesananById(token: string, id: string): Promise<PesananRecord> {
+export async function getPesananById(
+  token: string,
+  id: string
+): Promise<PesananRecord> {
   const res = await fetch(`${API_URL}/pesanan/${id}`, {
     headers: authHeaders(token),
   });
@@ -129,7 +138,11 @@ export async function getPesananById(token: string, id: string): Promise<Pesanan
   return res.json();
 }
 
-export async function updatePesanan(token: string, id: string, data: UpdatePesananDto): Promise<PesananRecord> {
+export async function updatePesanan(
+  token: string,
+  id: string,
+  data: UpdatePesananDto
+): Promise<PesananRecord> {
   const res = await fetch(`${API_URL}/pesanan/${id}/status`, {
     method: "PUT",
     headers: authHeaders(token),
@@ -139,7 +152,10 @@ export async function updatePesanan(token: string, id: string, data: UpdatePesan
   return res.json();
 }
 
-export async function cancelPesanan(token: string, id: string): Promise<PesananRecord> {
+export async function cancelPesanan(
+  token: string,
+  id: string
+): Promise<PesananRecord> {
   const res = await fetch(`${API_URL}/pesanan/${id}/cancel`, {
     method: "PUT",
     headers: authHeaders(token),
@@ -157,7 +173,10 @@ export async function deletePesanan(token: string, id: string): Promise<void> {
 }
 
 // Pesanan Item functions
-export async function createPesananItem(token: string, data: CreatePesananItemDto): Promise<PesananItemRecord> {
+export async function createPesananItem(
+  token: string,
+  data: CreatePesananItemDto
+): Promise<PesananItemRecord> {
   const res = await fetch(`${API_URL}/pesanan/item`, {
     method: "POST",
     headers: authHeaders(token),
@@ -167,7 +186,9 @@ export async function createPesananItem(token: string, data: CreatePesananItemDt
   return res.json();
 }
 
-export async function getAllPesananItems(token: string): Promise<PesananItemRecord[]> {
+export async function getAllPesananItems(
+  token: string
+): Promise<PesananItemRecord[]> {
   const res = await fetch(`${API_URL}/pesanan/item`, {
     headers: authHeaders(token),
   });
@@ -175,7 +196,10 @@ export async function getAllPesananItems(token: string): Promise<PesananItemReco
   return res.json();
 }
 
-export async function getPesananItemById(token: string, id: string): Promise<PesananItemRecord> {
+export async function getPesananItemById(
+  token: string,
+  id: string
+): Promise<PesananItemRecord> {
   const res = await fetch(`${API_URL}/pesanan/item/${id}`, {
     headers: authHeaders(token),
   });
@@ -183,7 +207,11 @@ export async function getPesananItemById(token: string, id: string): Promise<Pes
   return res.json();
 }
 
-export async function updatePesananItem(token: string, id: string, data: UpdatePesananItemDto): Promise<PesananItemRecord> {
+export async function updatePesananItem(
+  token: string,
+  id: string,
+  data: UpdatePesananItemDto
+): Promise<PesananItemRecord> {
   const res = await fetch(`${API_URL}/pesanan/item/${id}`, {
     method: "PUT",
     headers: authHeaders(token),
@@ -193,7 +221,10 @@ export async function updatePesananItem(token: string, id: string, data: UpdateP
   return res.json();
 }
 
-export async function deletePesananItem(token: string, id: string): Promise<void> {
+export async function deletePesananItem(
+  token: string,
+  id: string
+): Promise<void> {
   const res = await fetch(`${API_URL}/pesanan/item/${id}`, {
     method: "DELETE",
     headers: authHeaders(token),
