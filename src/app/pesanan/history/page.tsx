@@ -27,6 +27,11 @@ export default function PesananHistoryPage() {
         }
         setToken(stored);
         const data = await getPesananHistory(stored);
+        console.log("History Pesanan Data:", data);
+        if (data.length > 0) {
+          console.log("First Order Kota:", data[0].kota);
+          console.log("First Order Provinsi:", data[0].provinsi);
+        }
         setPesanan(data);
       } catch (e: any) {
         setError(e?.message || "Gagal memuat riwayat pesanan");
@@ -72,6 +77,16 @@ export default function PesananHistoryPage() {
       statusMap[status] || { text: "❓ Tidak Diketahui", color: "#7f8c8d" }
     );
   };
+
+  function calculateEtaDate(orderDate: string, etaDays: number): string {
+    const date = new Date(orderDate);
+    date.setDate(date.getDate() + etaDays);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
   if (loading)
     return (
@@ -163,8 +178,68 @@ export default function PesananHistoryPage() {
                 {/* DETAIL ALAMAT */}
                 <div style={styles.section}>
                   <p style={styles.sectionTitle}>📍 Alamat Pengiriman</p>
-                  <p style={styles.address}>{order.alamat_pengiriman}</p>
+                  <p style={styles.address}>
+                    {order.alamat_pengiriman}
+                    {order.kota && order.provinsi && (
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: 5,
+                          fontSize: "12px",
+                          color: "#7f8c8d",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {order.kota}, {order.provinsi}
+                      </span>
+                    )}
+                  </p>
                 </div>
+
+                {/* ESTIMASI PENGIRIMAN */}
+                {order.eta_min &&
+                  order.eta_max &&
+                  order.status !== StatusPesanan.SELESAI &&
+                  order.status !== StatusPesanan.DIBATALKAN && (
+                    <div style={styles.section}>
+                      <p style={styles.sectionTitle}>🚚 Estimasi Pengiriman</p>
+                      <div
+                        style={{
+                          backgroundColor: "#e8f5e9",
+                          borderRadius: 6,
+                          padding: 10,
+                          fontSize: "13px",
+                          border: "1px solid #a5d6a7",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <div>
+                            <span style={{ color: "#27ae60", fontWeight: "bold" }}>
+                              📅 {calculateEtaDate(order.tanggal_pesanan, order.eta_min)}
+                            </span>
+                            <span style={{ color: "#7f8c8d", fontSize: "11px", marginLeft: 5 }}>
+                              ({order.eta_min} hari)
+                            </span>
+                          </div>
+                          <div style={{ color: "#7f8c8d" }}>-</div>
+                          <div>
+                            <span style={{ color: "#f39c12", fontWeight: "bold" }}>
+                              📅 {calculateEtaDate(order.tanggal_pesanan, order.eta_max)}
+                            </span>
+                            <span style={{ color: "#7f8c8d", fontSize: "11px", marginLeft: 5 }}>
+                              ({order.eta_max} hari)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                 {/* ITEM PRODUK */}
                 {(order.pesanan_items?.length ?? 0) > 0 && (

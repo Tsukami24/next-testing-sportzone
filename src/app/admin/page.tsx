@@ -164,6 +164,39 @@ export default function AdminCODPage() {
         🛠️ Admin - Manajemen Pembayaran COD
       </h1>
 
+      <div style={{ marginBottom: 20, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => router.push('/admin/pengembalian')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#f39c12',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          ↩️ Kelola Pengembalian
+        </button>
+        <button
+          onClick={() => router.push('/admin/produk-rusak')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          📦❌ Lihat Produk Rusak
+        </button>
+      </div>
+
       <div style={{ marginBottom: 20 }}>
         <p style={{ fontSize: '16px', color: '#7f8c8d' }}>
           Kelola status pembayaran COD yang tidak bisa diupdate otomatis seperti Midtrans

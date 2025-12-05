@@ -18,6 +18,10 @@ export interface PesananRecord {
   total_harga: number;
   status: StatusPesanan;
   alamat_pengiriman: string;
+  kota: string;
+  provinsi: string;
+  eta_min: number;
+  eta_max: number;
   created_at: string;
   updated_at: string;
   pesanan_items?: PesananItemRecord[];
@@ -53,6 +57,8 @@ export interface CreatePesananDto {
   tanggal_pesanan: string;
   total_harga: number;
   alamat_pengiriman: string;
+  kota: string;
+  provinsi: string;
   metode_pembayaran: string;
   items: CreatePesananItemDto[];
 }

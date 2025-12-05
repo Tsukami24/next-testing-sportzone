@@ -45,6 +45,9 @@ export default function PesananDetailPage() {
         }
 
         const data = await getPesananById(stored, id);
+        console.log("Detail Pesanan Data:", data);
+        console.log("Kota:", data.kota);
+        console.log("Provinsi:", data.provinsi);
         setPesanan(data);
 
         // Sync order status with payment status
@@ -121,6 +124,19 @@ export default function PesananDetailPage() {
       default:
         return "❓ Status Tidak Diketahui";
     }
+  }
+
+  function calculateEtaDate(
+    orderDate: string,
+    etaDays: number
+  ): string {
+    const date = new Date(orderDate);
+    date.setDate(date.getDate() + etaDays);
+    return date.toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   }
 
   if (loading) {
@@ -410,8 +426,143 @@ export default function PesananDetailPage() {
             >
               {pesanan.alamat_pengiriman}
             </div>
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "14px",
+                color: "#7f8c8d",
+                fontWeight: "bold",
+              }}
+            >
+              {pesanan.kota && pesanan.provinsi
+                ? `${pesanan.kota}, ${pesanan.provinsi}`
+                : pesanan.kota || pesanan.provinsi
+                ? pesanan.kota || pesanan.provinsi
+                : "(Kota/Provinsi tidak tersedia)"}
+            </div>
           </div>
         </div>
+
+        {/* Estimated Delivery */}
+        {pesanan.eta_min && pesanan.eta_max && (
+          <div style={{ marginBottom: 30 }}>
+            <h3
+              style={{
+                margin: "0 0 15px 0",
+                color: "#2c3e50",
+                fontSize: "22px",
+                fontWeight: "bold",
+              }}
+            >
+              🚚 Estimasi Pengiriman
+            </h3>
+            <div
+              style={{
+                padding: "20px",
+                backgroundColor: "#e8f5e9",
+                borderRadius: 12,
+                border: "2px solid #a5d6a7",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 20,
+                  marginBottom: 15,
+                }}
+              >
+                <div
+                  style={{
+                    padding: "15px",
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    border: "2px solid #c8e6c9",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      color: "#7f8c8d",
+                      marginBottom: 8,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    📅 Estimasi Tercepat
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      color: "#27ae60",
+                    }}
+                  >
+                    {calculateEtaDate(pesanan.tanggal_pesanan, pesanan.eta_min)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#7f8c8d",
+                      marginTop: 5,
+                    }}
+                  >
+                    ({pesanan.eta_min} hari kerja)
+                  </div>
+                </div>
+                <div
+                  style={{
+                    padding: "15px",
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    border: "2px solid #c8e6c9",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      color: "#7f8c8d",
+                      marginBottom: 8,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    📅 Estimasi Terlama
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      color: "#f39c12",
+                    }}
+                  >
+                    {calculateEtaDate(pesanan.tanggal_pesanan, pesanan.eta_max)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#7f8c8d",
+                      marginTop: 5,
+                    }}
+                  >
+                    ({pesanan.eta_max} hari kerja)
+                  </div>
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: "12px",
+                  backgroundColor: "#fff9c4",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  color: "#2c3e50",
+                  textAlign: "center",
+                }}
+              >
+                💡 Estimasi pengiriman dihitung berdasarkan lokasi tujuan dan
+                waktu proses
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Order Items */}
         {pesanan.pesanan_items && pesanan.pesanan_items.length > 0 && (
@@ -740,6 +891,73 @@ export default function PesananDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Customer Return Section */}
+        {!isUserPetugas &&
+          (pesanan.status === StatusPesanan.DIKIRIM ||
+            pesanan.status === StatusPesanan.SELESAI) && (
+            <div style={{ marginBottom: 30 }}>
+              <h3
+                style={{
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                  fontSize: "22px",
+                  fontWeight: "bold",
+                }}
+              >
+                ↩️ Pengembalian
+              </h3>
+              <div
+                style={{
+                  padding: "20px",
+                  backgroundColor: "#e3f2fd",
+                  borderRadius: 12,
+                  border: "2px solid #bbdefb",
+                }}
+              >
+                <p style={{ marginBottom: 15, color: "#2c3e50" }}>
+                  Apakah ada masalah dengan pesanan Anda? Ajukan pengembalian
+                  jika produk rusak, salah varian, atau tidak sesuai deskripsi.
+                </p>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/pengembalian/ajukan?pesanan_id=${pesanan.id}`
+                      )
+                    }
+                    style={{
+                      padding: "12px 24px",
+                      backgroundColor: "#f39c12",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    ↩️ Ajukan Pengembalian
+                  </button>
+                  <button
+                    onClick={() => router.push("/pengembalian")}
+                    style={{
+                      padding: "12px 24px",
+                      backgroundColor: "#95a5a6",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    📋 Lihat Pengembalian Saya
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Actions */}
         <div

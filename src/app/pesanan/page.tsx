@@ -92,6 +92,16 @@ export default function PesananListPage() {
     }
   }
 
+  function calculateEtaDate(orderDate: string, etaDays: number): string {
+    const date = new Date(orderDate);
+    date.setDate(date.getDate() + etaDays);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   if (loading) {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
@@ -362,8 +372,68 @@ export default function PesananListPage() {
                     }}
                   >
                     {order.alamat_pengiriman}
+                    {order.kota && order.provinsi && (
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: 5,
+                          fontSize: "12px",
+                          color: "#7f8c8d",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {order.kota}, {order.provinsi}
+                      </span>
+                    )}
                   </p>
                 </div>
+
+                {order.eta_min &&
+                  order.eta_max &&
+                  order.status !== StatusPesanan.SELESAI &&
+                  order.status !== StatusPesanan.DIBATALKAN && (
+                    <div
+                      style={{
+                        marginTop: 15,
+                        padding: "12px",
+                        backgroundColor: "#e8f5e9",
+                        borderRadius: "8px",
+                        border: "1px solid #a5d6a7",
+                      }}
+                    >
+                      <div style={{ marginBottom: "8px" }}>
+                        <strong style={{ color: "#2c3e50", fontSize: "13px" }}>
+                          🚚 Estimasi Pengiriman:
+                        </strong>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div>
+                          <span style={{ color: "#27ae60", fontWeight: "bold" }}>
+                            📅 {calculateEtaDate(order.tanggal_pesanan, order.eta_min)}
+                          </span>
+                          <span style={{ color: "#7f8c8d", fontSize: "11px", marginLeft: 5 }}>
+                            ({order.eta_min} hari)
+                          </span>
+                        </div>
+                        <div style={{ color: "#7f8c8d" }}>-</div>
+                        <div>
+                          <span style={{ color: "#f39c12", fontWeight: "bold" }}>
+                            📅 {calculateEtaDate(order.tanggal_pesanan, order.eta_max)}
+                          </span>
+                          <span style={{ color: "#7f8c8d", fontSize: "11px", marginLeft: 5 }}>
+                            ({order.eta_max} hari)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                 {order.pesanan_items && order.pesanan_items.length > 0 && (
                   <div style={{ marginTop: 15 }}>

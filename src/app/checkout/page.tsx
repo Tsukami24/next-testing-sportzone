@@ -38,6 +38,8 @@ export default function CheckoutPage() {
 
   // Form state
   const [shippingAddress, setShippingAddress] = useState("");
+  const [kota, setKota] = useState("");
+  const [provinsi, setProvinsi] = useState("");
   const [orderDate, setOrderDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<MetodePembayaran>(
     MetodePembayaran.DANA
@@ -133,6 +135,16 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!kota.trim()) {
+      setError("Kota harus diisi");
+      return;
+    }
+
+    if (!provinsi.trim()) {
+      setError("Provinsi harus diisi");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -151,6 +163,8 @@ export default function CheckoutPage() {
         tanggal_pesanan: new Date(orderDate).toISOString(),
         total_harga: effectiveTotal,
         alamat_pengiriman: shippingAddress,
+        kota: kota,
+        provinsi: provinsi,
         items: items,
       };
 
@@ -429,6 +443,30 @@ export default function CheckoutPage() {
                 rows={4}
                 placeholder="Masukkan alamat pengiriman lengkap..."
                 className="form-textarea"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Kota: *</label>
+              <input
+                type="text"
+                value={kota}
+                onChange={(e) => setKota(e.target.value)}
+                required
+                placeholder="Contoh: Jakarta, Bandung, Surabaya, Depok"
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Provinsi: *</label>
+              <input
+                type="text"
+                value={provinsi}
+                onChange={(e) => setProvinsi(e.target.value)}
+                required
+                placeholder="Contoh: DKI Jakarta, Jawa Barat, Jawa Timur"
+                className="form-input"
               />
             </div>
 

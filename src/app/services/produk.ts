@@ -324,3 +324,14 @@ export async function deleteProdukVarian(
   });
   if (!res.ok) throw new Error(await getErrorMessage(res));
 }
+
+export async function getTotalSoldByProduct(
+  token: string,
+  produkId: string
+): Promise<{ productId: string; totalSold: number }> {
+  const res = await fetch(`${API_URL}/produk/${produkId}/sold-count`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(await getErrorMessage(res));
+  return res.json();
+}

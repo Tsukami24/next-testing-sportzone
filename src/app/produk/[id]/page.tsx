@@ -8,6 +8,7 @@ import {
   StatusProduk,
   listProdukVarian,
   ProdukVarianRecord,
+  getTotalSoldByProduct,
 } from "../../services/produk";
 import { useCart } from "../../contexts/CartContext";
 import { addKeranjangItem } from "../../services/keranjang";
@@ -41,6 +42,9 @@ export default function ProdukDetailPage() {
   const [userRatingId, setUserRatingId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [ratingCount, setRatingCount] = useState(0);
+
+  // Total sold state
+  const [totalSold, setTotalSold] = useState<number>(0);
 
   useEffect(() => {
     async function init() {
@@ -90,6 +94,14 @@ export default function ProdukDetailPage() {
           }
         } catch (e) {
           console.error("Failed to load ratings", e);
+        }
+
+        // Load total sold count
+        try {
+          const soldData = await getTotalSoldByProduct(stored, id);
+          setTotalSold(soldData.totalSold);
+        } catch (e) {
+          console.error("Failed to load total sold", e);
         }
       } catch (e: any) {
         setError(e?.message || "Gagal memuat detail produk");
@@ -304,19 +316,21 @@ export default function ProdukDetailPage() {
             <p className="text-gray-500 font-mono">ID: {produk.id}</p>
           </div>
 
-          {/* Rating Section */}
-          <div className="mb-8 p-6 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              ⭐ Rating Produk
-            </h3>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="text-2xl font-bold text-yellow-600">
-                {averageRating.toFixed(1)} ⭐
+          {/* Product Stats Section */}
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Rating Section */}
+            <div className="p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                ⭐ Rating Produk
+              </h3>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {averageRating.toFixed(1)} ⭐
+                </div>
+                <div className="text-gray-600">
+                  ({ratingCount} orang memberikan rating)
+                </div>
               </div>
-              <div className="text-gray-600">
-                ({ratingCount} orang memberikan rating)
-              </div>
-            </div>
             {profile && (
               <div className="mb-4">
                 <label className="block mb-2 font-medium text-gray-700">
@@ -366,9 +380,28 @@ export default function ProdukDetailPage() {
                 />
               </div>
             )}
-            {!profile && (
-              <div className="text-gray-600">Login untuk memberikan rating</div>
-            )}
+              {!profile && (
+                <div className="text-gray-600">Login untuk memberikan rating</div>
+              )}
+            </div>
+
+            {/* Total Sold Section */}
+            <div className="p-6 bg-green-50 rounded-lg border border-green-200">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                📊 Statistik Penjualan
+              </h3>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-2xl font-bold text-green-600">
+                  {totalSold} Unit
+                </div>
+                <div className="text-gray-600">
+                  Total Produk Terjual
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                ✅ Dari pesanan yang sudah selesai
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
